@@ -1,7 +1,6 @@
 {
-  "name": "p2p-fastest-file-backend",
+  "name": "backend",
   "version": "1.0.0",
-  "description": "Signaling server for P2P file sharing app",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

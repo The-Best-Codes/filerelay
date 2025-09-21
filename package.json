@@ -1,0 +1,10 @@
+{
+  "name": "bc-share-p2p",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && bun run build && cd .. ",
+    "start": "cd backend && bun run start && cd .."
+  },
+  "author": "",
+  "license": "ISC"
+}
