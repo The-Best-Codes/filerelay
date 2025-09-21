@@ -1,4 +1,4 @@
-- [ ] Set up frontend to use Vite, Tailwind CSS, and Shadcn UI
+- [x] Set up frontend to use Vite, Tailwind CSS, and Shadcn UI
 - [ ] Set up the backend to serve the built frontend (frontend/dist) output
 - [ ] Give the app a unique port number but make it easy to change via env vars (e.g., PORT=1869)
 
