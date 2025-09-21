@@ -266,44 +266,47 @@ export default function SendPage() {
               </h2>
             </div>
             <div className="p-0 space-y-3 md:space-y-4">
-              <p className="text-sm md:text-base text-muted-foreground">
-                Scan this QR code on the device you want to send files to:
-              </p>
-              {qrCodeUrl && (
-                <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                  <img
-                    src={qrCodeUrl}
-                    alt="QR Code"
-                    className="w-48 h-48 md:w-64 md:h-64 border-2 border-border rounded-lg"
-                  />
-                  <div className="text-center">
-                    <p className="text-xs md:text-sm text-muted-foreground mb-1">
-                      Or enter this code manually:
-                    </p>
-                    <div className="bg-muted px-2 py-1 md:px-3 md:py-2 rounded-md font-mono text-xs md:text-sm">
-                      {clientId}
-                    </div>
-                  </div>
+              {connectionStatus.isConnected ? (
+                <div className="flex flex-col items-center justify-center py-8 md:py-12">
+                  <CheckCircle2 className="h-16 w-16 text-green-500" />
+                  <p className="text-xl md:text-2xl font-semibold mt-1">
+                    Connected and ready!
+                  </p>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    You can now send files to the connected device.
+                  </p>
                 </div>
-              )}
+              ) : (
+                <>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    Scan this QR code on the device you want to send files to:
+                  </p>
+                  {qrCodeUrl && (
+                    <div className="flex flex-col items-center space-y-2 md:space-y-3">
+                      <img
+                        src={qrCodeUrl}
+                        alt="QR Code"
+                        className="w-48 h-48 md:w-64 md:h-64 border-2 border-border rounded-lg"
+                      />
+                      <div className="text-center">
+                        <p className="text-xs md:text-sm text-muted-foreground mb-1">
+                          Or enter this code manually:
+                        </p>
+                        <div className="bg-muted px-2 py-1 md:px-3 md:py-2 rounded-md font-mono text-xs md:text-sm">
+                          {clientId}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              <div className="flex items-center gap-2">
-                {connectionStatus.isConnected ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
-                    <span className="text-xs md:text-sm font-medium">
-                      Connected
-                    </span>
-                  </>
-                ) : (
-                  <>
+                  <div className="flex items-center gap-2">
                     <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     <span className="text-xs md:text-sm text-muted-foreground">
                       Waiting for other devices...
                     </span>
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
