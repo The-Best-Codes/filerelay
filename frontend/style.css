@@ -1,80 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
 body {
-    font-family: sans-serif;
-    background-color: #f0f0f0;
-    color: #333;
+    font-family: 'Roboto', sans-serif;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
     text-align: center;
     margin: 0;
     padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.main-container {
+    width: 100%;
+    max-width: 800px;
 }
 
 h1 {
-    color: #444;
-}
-
-.container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 30px;
+    color: #00aaff;
+    margin-bottom: 40px;
 }
 
 .card {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    width: 300px;
+    background-color: #2c2c2c;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
 }
 
 input[type="file"], input[type="text"] {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    width: calc(100% - 24px);
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #333;
+    color: #f0f0f0;
+    transition: border-color 0.3s ease;
+}
+
+input[type="file"]:focus, input[type="text"]:focus {
+    border-color: #00aaff;
+    outline: none;
 }
 
 button {
-    background-color: #007bff;
+    background-color: #007acc;
     color: white;
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #005c99;
 }
 
-#room-info {
-    margin-top: 15px;
-    font-size: 18px;
+#clientId {
+    font-size: 20px;
     font-weight: bold;
+    color: #00d1ff;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 6px;
+    word-wrap: break-word;
 }
 
 #progress-container {
     width: 100%;
-    background-color: #ddd;
-    border-radius: 4px;
+    background-color: #444;
+    border-radius: 6px;
     margin-top: 20px;
     display: none;
+    overflow: hidden;
 }
 
 #progress-bar {
     width: 0%;
     height: 30px;
-    background-color: #4caf50;
+    background: linear-gradient(45deg, #00aaff, #007acc);
     text-align: center;
     line-height: 30px;
     color: white;
-    border-radius: 4px;
+    border-radius: 6px 0 0 6px;
+    transition: width 0.5s ease;
 }
 
-#status-messages {
-    margin-top: 20px;
-    color: #666;
+#status-messages, #transfer-rate, #eta, #total-time {
+    margin-top: 10px;
+    color: #ccc;
 }
 
 #download-link-container a {
@@ -82,12 +108,28 @@ button:hover {
     margin-top: 20px;
     background-color: #28a745;
     color: white;
-    padding: 10px 20px;
+    padding: 12px 25px;
     text-decoration: none;
-    border-radius: 5px;
+    border-radius: 6px;
     font-size: 18px;
+    transition: background-color 0.3s ease;
 }
 
 #download-link-container a:hover {
     background-color: #218838;
+}
+
+#sent-successfully {
+    color: #28a745;
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .main-container {
+        padding: 10px;
+    }
+
+    .card {
+        padding: 20px;
+    }
 }

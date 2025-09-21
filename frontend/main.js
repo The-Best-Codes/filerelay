@@ -17,6 +17,7 @@ let receivedSize = 0;
 let receiveBuffer = [];
 let fileMetadata = {};
 let room;
+let startTime;
 
 const CHUNK_SIZE = 64 * 1024; // 64KB
 
@@ -126,15 +127,21 @@ function sendData() {
     console.log('Sending file:', file.name, 'size:', file.size);
     statusMessages.innerText = 'Sending file...';
     progressContainer.style.display = 'block';
+    document.getElementById('transfer-stats-card').style.display = 'block';
 
     // Send file metadata first
     dataChannel.send(JSON.stringify({ name: file.name, size: file.size }));
 
     let offset = 0;
+    const startTime = new Date().getTime();
 
     const sendNextChunk = () => {
         if (offset >= file.size) {
             console.log('Finished sending file');
+            const endTime = new Date().getTime();
+            const totalTime = (endTime - startTime) / 1000;
+            document.getElementById('total-time').innerText = `Total time: ${totalTime.toFixed(2)}s`;
+            document.getElementById('sent-successfully').style.display = 'block';
             return;
         }
 
@@ -156,7 +163,14 @@ function sendData() {
             try {
                 dataChannel.send(target.result);
                 offset += target.result.byteLength;
-                console.log(`Sent chunk: offset=${offset}, progress=${(offset / file.size) * 100}%`);
+
+                const elapsedTime = (new Date().getTime() - startTime) / 1000; // in seconds
+                const transferRate = offset / elapsedTime;
+                const eta = (file.size - offset) / transferRate;
+
+                document.getElementById('transfer-rate').innerText = `Transfer rate: ${(transferRate / 1024 / 1024).toFixed(2)} MB/s`;
+                document.getElementById('eta').innerText = `ETA: ${eta.toFixed(2)}s`;
+
                 progressBar.style.width = `${Math.round((offset / file.size) * 100)}%`;
                 progressBar.innerText = `${Math.round((offset / file.size) * 100)}%`;
                 sendNextChunk();
@@ -177,16 +191,29 @@ function handleMessage(event) {
         console.log('Received file metadata:', fileMetadata);
         statusMessages.innerText = 'Receiving file...';
         progressContainer.style.display = 'block';
+        document.getElementById('transfer-stats-card').style.display = 'block';
+        startTime = new Date().getTime();
         return;
     }
 
     receiveBuffer.push(event.data);
     receivedSize += event.data.byteLength;
 
+    const elapsedTime = (new Date().getTime() - startTime) / 1000; // in seconds
+    const transferRate = receivedSize / elapsedTime;
+    const eta = (fileMetadata.size - receivedSize) / transferRate;
+
+    document.getElementById('transfer-rate').innerText = `Transfer rate: ${(transferRate / 1024 / 1024).toFixed(2)} MB/s`;
+    document.getElementById('eta').innerText = `ETA: ${eta.toFixed(2)}s`;
+
     progressBar.style.width = `${Math.round((receivedSize / fileMetadata.size) * 100)}%`;
     progressBar.innerText = `${Math.round((receivedSize / fileMetadata.size) * 100)}%`;
 
     if (receivedSize === fileMetadata.size) {
+        const endTime = new Date().getTime();
+        const totalTime = (endTime - startTime) / 1000;
+        document.getElementById('total-time').innerText = `Total time: ${totalTime.toFixed(2)}s`;
+
         const received = new Blob(receiveBuffer);
         receiveBuffer = [];
 
