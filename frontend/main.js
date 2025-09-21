@@ -21,7 +21,7 @@ let fileMetadata = {};
 let room;
 let startTime;
 
-const CHUNK_SIZE = 64 * 1024; // 64KB
+const CHUNK_SIZE = 128 * 1024; // 128KB
 
 // --- Signaling --- //
 
