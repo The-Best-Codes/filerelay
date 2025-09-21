@@ -123,36 +123,52 @@ function sendData() {
         return;
     }
 
-    console.log('Sending file:', file.name);
+    console.log('Sending file:', file.name, 'size:', file.size);
     statusMessages.innerText = 'Sending file...';
     progressContainer.style.display = 'block';
 
     // Send file metadata first
     dataChannel.send(JSON.stringify({ name: file.name, size: file.size }));
 
-    const fileReader = new FileReader();
     let offset = 0;
 
-    fileReader.onload = ({ target }) => {
-        if (target.error) {
-            console.error(`File could not be read! Error: ${target.error}`);
+    const sendNextChunk = () => {
+        if (offset >= file.size) {
+            console.log('Finished sending file');
             return;
         }
-        dataChannel.send(target.result);
-        offset += target.result.byteLength;
-        progressBar.style.width = `${Math.round((offset / file.size) * 100)}%`;
-        progressBar.innerText = `${Math.round((offset / file.size) * 100)}%`;
 
-        if (offset < file.size) {
-            readSlice(offset);
+        if (dataChannel.bufferedAmount > dataChannel.bufferedAmountLowThreshold) {
+            dataChannel.onbufferedamountlow = () => {
+                console.log('bufferedamountlow event, continuing to send');
+                sendNextChunk();
+            };
+            return;
         }
-    };
 
-    const readSlice = o => {
-        const slice = file.slice(o, o + CHUNK_SIZE);
+        const slice = file.slice(offset, offset + CHUNK_SIZE);
+        const fileReader = new FileReader();
+        fileReader.onload = ({ target }) => {
+            if (target.error) {
+                console.error(`File could not be read! Error: ${target.error}`);
+                return;
+            }
+            try {
+                dataChannel.send(target.result);
+                offset += target.result.byteLength;
+                console.log(`Sent chunk: offset=${offset}, progress=${(offset / file.size) * 100}%`);
+                progressBar.style.width = `${Math.round((offset / file.size) * 100)}%`;
+                progressBar.innerText = `${Math.round((offset / file.size) * 100)}%`;
+                sendNextChunk();
+            } catch (error) {
+                console.error('Error sending data:', error);
+            }
+        };
         fileReader.readAsArrayBuffer(slice);
     };
-    readSlice(0);
+
+    dataChannel.bufferedAmountLowThreshold = CHUNK_SIZE * 4;
+    sendNextChunk();
 }
 
 function handleMessage(event) {
