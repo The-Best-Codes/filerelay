@@ -9,8 +9,6 @@ import { triggerHapticFeedback } from "@/utils/haptics";
 import {
   Archive,
   ArrowLeft,
-  CheckCircle2,
-  Clock,
   File,
   FileText,
   Image,
@@ -190,23 +188,6 @@ export default function SendPage() {
     if (type.includes("text") || type.includes("document"))
       return <FileText className={className} />;
     return <File className={className} />;
-  };
-
-  const getStatusIcon = (status: string) => {
-    const className = "h-4 w-4";
-
-    switch (status) {
-      case "waiting":
-        return <Clock className={`${className} text-muted-foreground`} />;
-      case "transferring":
-        return <Loader2 className={`${className} text-primary animate-spin`} />;
-      case "completed":
-        return <CheckCircle2 className={`${className} text-primary`} />;
-      case "error":
-        return <X className={`${className} text-destructive`} />;
-      default:
-        return <Clock className={`${className} text-muted-foreground`} />;
-    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -404,7 +385,7 @@ export default function SendPage() {
                 </div>
               </div>
               {overallProgress > 0 && (
-                <Progress value={overallProgress} className="w-full" />
+                <Progress value={overallProgress} className="w-full mt-2" />
               )}
             </div>
             <div className="p-0">
@@ -418,7 +399,7 @@ export default function SendPage() {
                         : "opacity-100 transform translate-y-0 scale-100"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                         {getFileIcon(fileItem.file)}
                         <div className="flex-1 min-w-0">
@@ -428,18 +409,6 @@ export default function SendPage() {
                           <p className="text-xs md:text-sm text-muted-foreground">
                             {formatFileSize(fileItem.file.size)}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(fileItem.status)}
-                          <span className="hidden md:inline text-xs text-muted-foreground capitalize">
-                            {fileItem.status === "waiting"
-                              ? "Queued"
-                              : fileItem.status === "transferring"
-                                ? "Sending"
-                                : fileItem.status === "completed"
-                                  ? "Sent"
-                                  : "Error"}
-                          </span>
                         </div>
                       </div>
                       <Button
@@ -454,7 +423,7 @@ export default function SendPage() {
                     </div>
 
                     {fileItem.progress > 0 && (
-                      <div className="space-y-1 md:space-y-2">
+                      <div className="space-y-1 md:space-y-2 mt-2">
                         <Progress value={fileItem.progress} />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{Math.round(fileItem.progress)}%</span>

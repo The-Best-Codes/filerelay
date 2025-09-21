@@ -11,7 +11,6 @@ import {
   Archive,
   ArrowLeft,
   CheckCircle2,
-  Clock,
   Download,
   File,
   FileText,
@@ -206,19 +205,6 @@ export default function ReceivePage() {
     return <File className={className} />;
   };
 
-  const getStatusIcon = (status: string) => {
-    const className = "h-4 w-4";
-
-    switch (status) {
-      case "receiving":
-        return <Loader2 className={`${className} text-primary animate-spin`} />;
-      case "completed":
-        return <CheckCircle2 className={`${className} text-primary`} />;
-      default:
-        return <Clock className={`${className} text-muted-foreground`} />;
-    }
-  };
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -357,7 +343,7 @@ export default function ReceivePage() {
               <div className="space-y-2 md:space-y-3">
                 {receivedFiles.map((file, index) => (
                   <div key={index} className="border rounded-lg p-3 md:p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                         {getFileIcon(file.metadata.name)}
                         <div className="flex-1 min-w-0">
@@ -370,30 +356,21 @@ export default function ReceivePage() {
                               : "Size unknown"}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {getStatusIcon(file.status)}
-                          <span className="hidden md:inline text-xs text-muted-foreground capitalize">
-                            {file.status === "receiving"
-                              ? "Receiving"
-                              : "Complete"}
-                          </span>
-                        </div>
                       </div>
-                      {file.status === "completed" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(file)}
-                          className="h-8"
-                        >
-                          <Download className="h-4 w-4" />
-                          <span className="hidden sm:inline">Download</span>
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(file)}
+                        className="h-8"
+                        disabled={file.status !== "completed"}
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="hidden sm:inline">Download</span>
+                      </Button>
                     </div>
 
                     {file.status === "receiving" && file.progress > 0 && (
-                      <div className="space-y-1 md:space-y-2">
+                      <div className="space-y-1 md:space-y-2 mt-2">
                         <Progress value={file.progress} />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{Math.round(file.progress)}%</span>
