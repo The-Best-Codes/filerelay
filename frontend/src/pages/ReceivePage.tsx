@@ -307,7 +307,7 @@ export default function ReceivePage() {
               </h2>
             </div>
             <div className="p-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {connectionStatus.isConnected ? (
                   <>
                     <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />

@@ -307,7 +307,7 @@ export default function SendPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-background p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6 flex flex-col">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Upload className="h-4 w-4 md:h-5 md:w-5" />
@@ -319,9 +319,9 @@ export default function SendPage() {
                 )}
               </h2>
             </div>
-            <div className="p-0">
+            <div className="p-0 flex-1">
               <div
-                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors h-full ${
                   isDragOver ? "border-primary bg-primary/5" : "border-border"
                 }`}
                 onDragOver={handleDragOver}
