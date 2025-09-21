@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BCShare</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="main-container">
+        <h1>BCShare</h1>
+
+        <div class="card">
+            <h2>Your Client ID</h2>
+            <div id="clientId"></div>
+        </div>
+
+        <div class="card">
+            <h2>Connect to Client</h2>
+            <input type="text" id="targetIdInput" placeholder="Enter Client ID">
+            <button id="connectBtn">Connect</button>
+        </div>
+
+        <div class="card">
+            <h2>Send File</h2>
+            <input type="file" id="fileInput">
+            <button id="sendBtn">Send</button>
+        </div>
+
+        <div class="card" id="transfer-stats-card" style="display: none;">
+            <h2>Transfer Statistics</h2>
+            <div id="transfer-rate"></div>
+            <div id="eta"></div>
+            <div id="total-time"></div>
+        </div>
+
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div id="status-messages"></div>
+
+        <div id="download-link-container"></div>
+
+        <div id="sent-successfully" style="display: none;">
+            <h2>File Sent Successfully!</h2>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
