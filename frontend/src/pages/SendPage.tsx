@@ -1,32 +1,32 @@
-import { useState, useEffect, useRef } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Upload,
-  X,
-  FileText,
-  Image,
-  Video,
-  Music,
-  Archive,
-  File,
-  Users,
-  Wifi,
-  QrCode,
-  ArrowLeft,
-  Loader2,
-  Clock,
-  CheckCircle2,
-} from "lucide-react";
-import { useNavigate } from "react-router";
-import QRCode from "qrcode";
 import SocketService, {
-  type FileTransferProgress,
   type ConnectionStatus,
+  type FileTransferProgress,
 } from "@/services/SocketService";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import {
+  Archive,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  File,
+  FileText,
+  Image,
+  Loader2,
+  Music,
+  QrCode,
+  Upload,
+  Users,
+  Video,
+  Wifi,
+  X,
+} from "lucide-react";
+import QRCode from "qrcode";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 interface FileWithProgress {
   file: File;
@@ -113,14 +113,12 @@ export default function SendPage() {
             eta: progress.eta,
           };
 
-          // Trigger haptic feedback when file completes
           if (
             progress.status === "completed" &&
             fileItem.status !== "completed"
           ) {
             triggerHapticFeedback("medium");
 
-            // Remove completed file after animation
             setTimeout(() => {
               setFiles((current) => current.filter((_, i) => i !== index));
             }, 2000);
@@ -131,7 +129,6 @@ export default function SendPage() {
         return fileItem;
       });
 
-      // Update overall progress
       const totalProgress = updated.reduce(
         (sum, file) => sum + file.progress,
         0,
@@ -270,7 +267,6 @@ export default function SendPage() {
   return (
     <div className="min-h-screen p-2 md:p-4">
       <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
@@ -282,7 +278,6 @@ export default function SendPage() {
         </div>
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          {/* QR Code and Connection Status */}
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
@@ -331,7 +326,6 @@ export default function SendPage() {
             </CardContent>
           </Card>
 
-          {/* File Upload Area */}
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">
               <CardTitle className="flex items-center gap-2 text-base md:text-lg">
@@ -381,7 +375,6 @@ export default function SendPage() {
           </Card>
         </div>
 
-        {/* File List */}
         {files.length > 0 && (
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">

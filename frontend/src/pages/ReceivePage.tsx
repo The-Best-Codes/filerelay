@@ -1,31 +1,31 @@
-import { useState, useEffect, useRef } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Download,
-  QrCode,
-  ArrowLeft,
-  Loader2,
-  FileText,
-  Image,
-  Video,
-  Music,
-  Archive,
-  File,
-  Users,
-  Wifi,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router";
 import SocketService, {
-  type FileMetadata,
   type ConnectionStatus,
+  type FileMetadata,
 } from "@/services/SocketService";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import {
+  Archive,
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Download,
+  File,
+  FileText,
+  Image,
+  Loader2,
+  Music,
+  QrCode,
+  Users,
+  Video,
+  Wifi,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 
 interface ReceivedFile {
   blob: Blob;
@@ -87,7 +87,6 @@ export default function ReceivePage() {
             (f) => f.metadata.name === metadata.name,
           );
           if (existingIndex >= 0) {
-            // Update existing file with proper metadata
             const updated = [...prev];
             updated[existingIndex] = {
               ...updated[existingIndex],
@@ -95,7 +94,6 @@ export default function ReceivePage() {
             };
             return updated;
           } else {
-            // Create new file entry with metadata
             return [
               ...prev,
               {
@@ -255,7 +253,6 @@ export default function ReceivePage() {
   return (
     <div className="min-h-screen p-2 md:p-4">
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
@@ -266,7 +263,6 @@ export default function ReceivePage() {
           </div>
         </div>
 
-        {/* Connection Card */}
         {!connectionStatus.isConnected && !clientIdFromUrl && (
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">
@@ -286,7 +282,7 @@ export default function ReceivePage() {
                     placeholder="Enter sender's code"
                     value={clientIdInput}
                     onChange={(e) => setClientIdInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleConnect()}
+                    onKeyDown={(e) => e.key === "Enter" && handleConnect()}
                     className="font-mono text-sm"
                   />
                   <Button
@@ -318,7 +314,6 @@ export default function ReceivePage() {
           </Card>
         )}
 
-        {/* Connection Status */}
         {(connectionStatus.isConnected || isConnecting) && (
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">
@@ -351,7 +346,6 @@ export default function ReceivePage() {
           </Card>
         )}
 
-        {/* Received Files */}
         {receivedFiles.length > 0 && (
           <Card className="p-3 md:p-6">
             <CardHeader className="p-0 pb-3 md:pb-4">

@@ -23,7 +23,7 @@ export default function InstructionsPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-2 md:p-4">
+    <div className="flex min-h-[100svh] items-center justify-center p-2 md:p-4">
       <div className="w-full max-w-md space-y-4 md:space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-xl md:text-2xl font-bold">{title}</h1>
