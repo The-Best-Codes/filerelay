@@ -38,7 +38,6 @@ class SocketService {
   private onErrorCallback?: (error: string) => void;
 
   // File transfer state
-  // File transfer state
   private receivedBuffer: ArrayBuffer[] = [];
   private receivedSize: number = 0;
   private fileMetadata: FileMetadata | null = null;
@@ -299,7 +298,6 @@ class SocketService {
     }
 
     // Send files sequentially
-
     for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
       const file = files[fileIndex];
       await this.sendSingleFile(file, fileIndex);
