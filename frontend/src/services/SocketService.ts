@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+import { io, Socket } from "socket.io-client";
 
 export interface FileMetadata {
   name: string;
@@ -11,7 +11,7 @@ export interface FileTransferProgress {
   progress: number;
   transferRate: number;
   eta: number;
-  status: 'waiting' | 'transferring' | 'completed' | 'error';
+  status: "waiting" | "transferring" | "completed" | "error";
 }
 
 export interface ConnectionStatus {
@@ -52,31 +52,33 @@ class SocketService {
 
   private connect() {
     // Use current host or fallback to localhost
-    const baseUrl = import.meta.env.VITE_BASE_URL || 
+    const baseUrl =
+      import.meta.env.VITE_BASE_URL ||
       `${window.location.protocol}//${window.location.hostname}:1869`;
-    
+
     this.socket = io(baseUrl);
 
-    this.socket.on('clientId', (id: string) => {
+    this.socket.on("clientId", (id: string) => {
       this.clientId = id;
       this.onClientIdCallback?.(id);
     });
 
-    this.socket.on('join', (roomName: string, isInitiatorFlag: boolean) => {
+    this.socket.on("join", (roomName: string, isInitiatorFlag: boolean) => {
       this.room = roomName;
       this.isInitiator = isInitiatorFlag;
-      this.socket?.emit('join', roomName);
+      this.socket?.emit("join", roomName);
       this.createPeerConnection();
-      
+
       if (this.isInitiator) {
-        this.peerConnection?.createOffer()
-          .then(offer => this.peerConnection?.setLocalDescription(offer))
+        this.peerConnection
+          ?.createOffer()
+          .then((offer) => this.peerConnection?.setLocalDescription(offer))
           .then(() => {
             this.sendMessage(this.peerConnection?.localDescription, roomName);
           })
-          .catch(e => {
-            console.error('Error creating offer:', e);
-            this.onErrorCallback?.('Failed to create connection offer');
+          .catch((e) => {
+            console.error("Error creating offer:", e);
+            this.onErrorCallback?.("Failed to create connection offer");
           });
       }
 
@@ -84,22 +86,22 @@ class SocketService {
         isConnected: false,
         clientId: this.clientId!,
         isInitiator: this.isInitiator,
-        room: roomName
+        room: roomName,
       });
     });
 
-    this.socket.on('ready', () => {
-      console.log('Socket ready');
+    this.socket.on("ready", () => {
+      console.log("Socket ready");
     });
 
-    this.socket.on('message', (message: unknown) => {
+    this.socket.on("message", (message: unknown) => {
       this.handleSignalingMessage(message);
     });
 
-    this.socket.on('disconnect', () => {
+    this.socket.on("disconnect", () => {
       this.onConnectionStatusCallback?.({
         isConnected: false,
-        clientId: this.clientId!
+        clientId: this.clientId!,
       });
     });
   }
@@ -107,17 +109,20 @@ class SocketService {
   private createPeerConnection() {
     try {
       this.peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
 
       this.peerConnection.onicecandidate = (event) => {
         if (event.candidate && this.room) {
-          this.sendMessage({
-            type: 'candidate',
-            label: event.candidate.sdpMLineIndex,
-            id: event.candidate.sdpMid,
-            candidate: event.candidate.candidate,
-          }, this.room);
+          this.sendMessage(
+            {
+              type: "candidate",
+              label: event.candidate.sdpMLineIndex,
+              id: event.candidate.sdpMid,
+              candidate: event.candidate.candidate,
+            },
+            this.room,
+          );
         }
       };
 
@@ -126,35 +131,35 @@ class SocketService {
       };
 
       if (this.isInitiator) {
-        this.dataChannel = this.peerConnection.createDataChannel('file', {
-          ordered: true
+        this.dataChannel = this.peerConnection.createDataChannel("file", {
+          ordered: true,
         });
         this.setupDataChannel(this.dataChannel);
       }
     } catch (error) {
-      console.error('Failed to create peer connection:', error);
-      this.onErrorCallback?.('Failed to create peer connection');
+      console.error("Failed to create peer connection:", error);
+      this.onErrorCallback?.("Failed to create peer connection");
     }
   }
 
   private setupDataChannel(channel: RTCDataChannel) {
     this.dataChannel = channel;
-    
+
     this.dataChannel.onopen = () => {
-      console.log('Data channel opened');
+      console.log("Data channel opened");
       this.onConnectionStatusCallback?.({
         isConnected: true,
         clientId: this.clientId!,
         isInitiator: this.isInitiator,
-        room: this.room!
+        room: this.room!,
       });
     };
 
     this.dataChannel.onclose = () => {
-      console.log('Data channel closed');
+      console.log("Data channel closed");
       this.onConnectionStatusCallback?.({
         isConnected: false,
-        clientId: this.clientId!
+        clientId: this.clientId!,
       });
     };
 
@@ -163,65 +168,75 @@ class SocketService {
     };
 
     this.dataChannel.onerror = (error) => {
-      console.error('Data channel error:', error);
-      this.onErrorCallback?.('Data channel error occurred');
+      console.error("Data channel error:", error);
+      this.onErrorCallback?.("Data channel error occurred");
     };
   }
 
   private handleSignalingMessage(message: unknown) {
-    const msg = message as { type: string; sdpMLineIndex?: number; candidate?: string; label?: number };
-    if (msg.type === 'offer') {
+    const msg = message as {
+      type: string;
+      sdpMLineIndex?: number;
+      candidate?: string;
+      label?: number;
+    };
+    if (msg.type === "offer") {
       if (!this.peerConnection) {
         this.createPeerConnection();
       }
-      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(msg as RTCSessionDescriptionInit))
+      this.peerConnection
+        ?.setRemoteDescription(
+          new RTCSessionDescription(msg as RTCSessionDescriptionInit),
+        )
         .then(() => this.peerConnection?.createAnswer())
-        .then(answer => this.peerConnection?.setLocalDescription(answer))
+        .then((answer) => this.peerConnection?.setLocalDescription(answer))
         .then(() => {
           this.sendMessage(this.peerConnection?.localDescription, this.room!);
         })
-        .catch(e => {
-          console.error('Error handling offer:', e);
-          this.onErrorCallback?.('Failed to handle connection offer');
+        .catch((e) => {
+          console.error("Error handling offer:", e);
+          this.onErrorCallback?.("Failed to handle connection offer");
         });
-    } else if (msg.type === 'answer') {
-      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(msg as RTCSessionDescriptionInit))
-        .catch(e => {
-          console.error('Error handling answer:', e);
-          this.onErrorCallback?.('Failed to handle connection answer');
+    } else if (msg.type === "answer") {
+      this.peerConnection
+        ?.setRemoteDescription(
+          new RTCSessionDescription(msg as RTCSessionDescriptionInit),
+        )
+        .catch((e) => {
+          console.error("Error handling answer:", e);
+          this.onErrorCallback?.("Failed to handle connection answer");
         });
-    } else if (msg.type === 'candidate') {
+    } else if (msg.type === "candidate") {
       const candidate = new RTCIceCandidate({
         sdpMLineIndex: msg.label,
         candidate: msg.candidate,
       });
-      this.peerConnection?.addIceCandidate(candidate)
-        .catch(e => {
-          console.error('Error adding ICE candidate:', e);
-        });
+      this.peerConnection?.addIceCandidate(candidate).catch((e) => {
+        console.error("Error adding ICE candidate:", e);
+      });
     }
   }
 
   private handleDataChannelMessage(event: MessageEvent) {
-    if (typeof event.data === 'string') {
+    if (typeof event.data === "string") {
       // File metadata
       this.fileMetadata = JSON.parse(event.data);
       this.receivedSize = 0;
       this.receivedBuffer = [];
       this.transferStartTime = Date.now();
-      
+
       // Notify about metadata
       if (this.fileMetadata) {
         this.onMetadataReceiveCallback?.(this.fileMetadata);
       }
-      
+
       this.onTransferProgressCallback?.({
         fileIndex: 0,
-        fileName: this.fileMetadata?.name || 'Unknown',
+        fileName: this.fileMetadata?.name || "Unknown",
         progress: 0,
         transferRate: 0,
         eta: 0,
-        status: 'transferring'
+        status: "transferring",
       });
       return;
     }
@@ -242,21 +257,21 @@ class SocketService {
         progress,
         transferRate,
         eta: isFinite(eta) ? eta : 0,
-        status: 'transferring'
+        status: "transferring",
       });
 
       if (this.receivedSize === this.fileMetadata.size) {
         // File transfer complete
         const file = new Blob(this.receivedBuffer);
         this.onFileReceiveCallback?.(file, this.fileMetadata);
-        
+
         this.onTransferProgressCallback?.({
           fileIndex: 0,
           fileName: this.fileMetadata.name,
           progress: 100,
           transferRate,
           eta: 0,
-          status: 'completed'
+          status: "completed",
         });
 
         // Reset for next file
@@ -268,18 +283,18 @@ class SocketService {
   }
 
   private sendMessage(message: unknown, room: string) {
-    this.socket?.emit('message', message, room);
+    this.socket?.emit("message", message, room);
   }
 
   // Public methods
   connectToClient(targetClientId: string) {
     if (!this.socket) return;
-    this.socket.emit('connect to', targetClientId);
+    this.socket.emit("connect to", targetClientId);
   }
 
   async sendFiles(files: File[]) {
-    if (!this.dataChannel || this.dataChannel.readyState !== 'open') {
-      this.onErrorCallback?.('No connection available for file transfer');
+    if (!this.dataChannel || this.dataChannel.readyState !== "open") {
+      this.onErrorCallback?.("No connection available for file transfer");
       return;
     }
 
@@ -294,14 +309,14 @@ class SocketService {
   private async sendSingleFile(file: File, fileIndex: number): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.dataChannel) {
-        reject(new Error('No data channel available'));
+        reject(new Error("No data channel available"));
         return;
       }
 
       // Send file metadata
       const metadata: FileMetadata = {
         name: file.name,
-        size: file.size
+        size: file.size,
       };
       this.dataChannel.send(JSON.stringify(metadata));
 
@@ -316,7 +331,7 @@ class SocketService {
             progress: 100,
             transferRate: file.size / ((Date.now() - startTime) / 1000),
             eta: 0,
-            status: 'completed'
+            status: "completed",
           });
           resolve();
           return;
@@ -331,7 +346,7 @@ class SocketService {
 
         const slice = file.slice(offset, offset + this.CHUNK_SIZE);
         const reader = new FileReader();
-        
+
         reader.onload = (event) => {
           if (event.target?.result && this.dataChannel) {
             try {
@@ -349,19 +364,19 @@ class SocketService {
                 progress,
                 transferRate,
                 eta: isFinite(eta) ? eta : 0,
-                status: 'transferring'
+                status: "transferring",
               });
 
               sendNextChunk();
             } catch (error) {
-              console.error('Error sending chunk:', error);
+              console.error("Error sending chunk:", error);
               reject(error);
             }
           }
         };
 
         reader.onerror = () => {
-          reject(new Error('File read error'));
+          reject(new Error("File read error"));
         };
 
         reader.readAsArrayBuffer(slice);
@@ -410,10 +425,10 @@ class SocketService {
 
   getConnectionStatus(): ConnectionStatus {
     return {
-      isConnected: this.dataChannel?.readyState === 'open',
+      isConnected: this.dataChannel?.readyState === "open",
       clientId: this.clientId!,
       isInitiator: this.isInitiator,
-      room: this.room!
+      room: this.room!,
     };
   }
 }

@@ -1,25 +1,25 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wifi, ArrowRight } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { triggerHapticFeedback } from '@/utils/haptics';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wifi, ArrowRight } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 export default function InstructionsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const action = searchParams.get('go');
+  const action = searchParams.get("go");
 
-  const isSending = action === 'send';
-  const title = isSending ? 'Send Files' : 'Receive Files';
-  const nextRoute = isSending ? '/send' : '/receive';
+  const isSending = action === "send";
+  const title = isSending ? "Send Files" : "Receive Files";
+  const nextRoute = isSending ? "/send" : "/receive";
 
   const handleBack = () => {
-    triggerHapticFeedback('light');
-    navigate('/');
+    triggerHapticFeedback("light");
+    navigate("/");
   };
 
   const handleContinue = () => {
-    triggerHapticFeedback('medium');
+    triggerHapticFeedback("medium");
     navigate(nextRoute);
   };
 
@@ -44,10 +44,11 @@ export default function InstructionsPage() {
                   Important:
                 </p>
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  Make sure both devices are connected to the same WiFi network before continuing.
+                  Make sure both devices are connected to the same WiFi network
+                  before continuing.
                 </p>
               </div>
-              
+
               <div className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
@@ -59,7 +60,10 @@ export default function InstructionsPage() {
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
                     2
                   </div>
-                  <p>Files are shared directly between devices (no uploads to cloud)</p>
+                  <p>
+                    Files are shared directly between devices (no uploads to
+                    cloud)
+                  </p>
                 </div>
                 <div className="flex items-start gap-2 md:gap-3">
                   <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
@@ -79,11 +83,7 @@ export default function InstructionsPage() {
               >
                 Back
               </Button>
-              <Button
-                onClick={handleContinue}
-                className="flex-1"
-                size="sm"
-              >
+              <Button onClick={handleContinue} className="flex-1" size="sm">
                 Continue
                 <ArrowRight className="h-4 w-4" />
               </Button>

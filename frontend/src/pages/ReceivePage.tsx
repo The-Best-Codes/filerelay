@@ -1,34 +1,37 @@
-import { useState, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Download, 
-  QrCode, 
-  ArrowLeft, 
-  Loader2, 
-  FileText, 
-  Image, 
-  Video, 
-  Music, 
-  Archive, 
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Download,
+  QrCode,
+  ArrowLeft,
+  Loader2,
+  FileText,
+  Image,
+  Video,
+  Music,
+  Archive,
   File,
   Users,
   Wifi,
   CheckCircle2,
-  Clock
-} from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import SocketService, { type FileMetadata, type ConnectionStatus } from '@/services/SocketService';
-import { triggerHapticFeedback } from '@/utils/haptics';
+  Clock,
+} from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SocketService, {
+  type FileMetadata,
+  type ConnectionStatus,
+} from "@/services/SocketService";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ReceivedFile {
   blob: Blob;
   metadata: FileMetadata;
   progress: number;
-  status: 'receiving' | 'completed';
+  status: "receiving" | "completed";
   transferRate?: number;
   eta?: number;
   downloadUrl?: string;
@@ -37,15 +40,17 @@ interface ReceivedFile {
 export default function ReceivePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const clientIdFromUrl = searchParams.get('client-id');
-  
+  const clientIdFromUrl = searchParams.get("client-id");
+
   const [isLoading, setIsLoading] = useState(!!clientIdFromUrl);
-  const [clientIdInput, setClientIdInput] = useState(clientIdFromUrl || '');
+  const [clientIdInput, setClientIdInput] = useState(clientIdFromUrl || "");
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({ isConnected: false });
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    isConnected: false,
+  });
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   const socketServiceRef = useRef<SocketService | null>(null);
 
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function ReceivePage() {
 
   const connectToSender = async (targetClientId: string) => {
     if (!targetClientId.trim()) {
-      setError('Please enter a valid client ID');
+      setError("Please enter a valid client ID");
       return;
     }
 
@@ -72,41 +77,48 @@ export default function ReceivePage() {
         if (status.isConnected) {
           setIsLoading(false);
           setIsConnecting(false);
-          triggerHapticFeedback('medium');
+          triggerHapticFeedback("medium");
         }
       });
 
       socketService.onMetadataReceive((metadata) => {
-        setReceivedFiles(prev => {
-          const existingIndex = prev.findIndex(f => f.metadata.name === metadata.name);
+        setReceivedFiles((prev) => {
+          const existingIndex = prev.findIndex(
+            (f) => f.metadata.name === metadata.name,
+          );
           if (existingIndex >= 0) {
             // Update existing file with proper metadata
             const updated = [...prev];
             updated[existingIndex] = {
               ...updated[existingIndex],
-              metadata
+              metadata,
             };
             return updated;
           } else {
             // Create new file entry with metadata
-            return [...prev, {
-              blob: new Blob(),
-              metadata,
-              progress: 0,
-              status: 'receiving',
-              transferRate: 0,
-              eta: 0
-            }];
+            return [
+              ...prev,
+              {
+                blob: new Blob(),
+                metadata,
+                progress: 0,
+                status: "receiving",
+                transferRate: 0,
+                eta: 0,
+              },
+            ];
           }
         });
       });
 
       socketService.onFileReceive((blob, metadata) => {
-        triggerHapticFeedback('medium');
+        triggerHapticFeedback("medium");
         const downloadUrl = URL.createObjectURL(blob);
-        setReceivedFiles(prev => {
+        setReceivedFiles((prev) => {
           const updated = [...prev];
-          const existingIndex = updated.findIndex(f => f.metadata.name === metadata.name);
+          const existingIndex = updated.findIndex(
+            (f) => f.metadata.name === metadata.name,
+          );
           if (existingIndex >= 0) {
             updated[existingIndex] = {
               ...updated[existingIndex],
@@ -114,7 +126,7 @@ export default function ReceivePage() {
               metadata,
               downloadUrl,
               progress: 100,
-              status: 'completed'
+              status: "completed",
             };
           }
           return updated;
@@ -122,17 +134,19 @@ export default function ReceivePage() {
       });
 
       socketService.onTransferProgress((progress) => {
-        if (progress.status === 'transferring') {
-          setReceivedFiles(prev => {
+        if (progress.status === "transferring") {
+          setReceivedFiles((prev) => {
             const updated = [...prev];
-            const existingIndex = updated.findIndex(f => f.metadata.name === progress.fileName);
+            const existingIndex = updated.findIndex(
+              (f) => f.metadata.name === progress.fileName,
+            );
             if (existingIndex >= 0) {
               updated[existingIndex] = {
                 ...updated[existingIndex],
                 progress: progress.progress,
                 transferRate: progress.transferRate,
                 eta: progress.eta,
-                status: 'receiving'
+                status: "receiving",
               };
             }
             return updated;
@@ -149,23 +163,22 @@ export default function ReceivePage() {
       setTimeout(() => {
         socketService.connectToClient(targetClientId);
       }, 1000);
-
     } catch {
-      setError('Failed to establish connection');
+      setError("Failed to establish connection");
       setIsConnecting(false);
       setIsLoading(false);
     }
   };
 
   const handleConnect = () => {
-    triggerHapticFeedback('light');
+    triggerHapticFeedback("light");
     connectToSender(clientIdInput);
   };
 
   const handleDownload = (file: ReceivedFile) => {
-    triggerHapticFeedback('light');
+    triggerHapticFeedback("light");
     if (file.downloadUrl) {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = file.downloadUrl;
       link.download = file.metadata.name;
       document.body.appendChild(link);
@@ -175,29 +188,34 @@ export default function ReceivePage() {
   };
 
   const handleBack = () => {
-    triggerHapticFeedback('light');
-    navigate('/');
+    triggerHapticFeedback("light");
+    navigate("/");
   };
 
   const getFileIcon = (fileName: string) => {
-    const ext = fileName.toLowerCase().split('.').pop() || '';
+    const ext = fileName.toLowerCase().split(".").pop() || "";
     const className = "h-5 w-5";
-    
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return <Image className={className} />;
-    if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) return <Video className={className} />;
-    if (['mp3', 'wav', 'flac', 'aac', 'ogg'].includes(ext)) return <Music className={className} />;
-    if (['zip', 'rar', 'tar', '7z', 'gz'].includes(ext)) return <Archive className={className} />;
-    if (['txt', 'doc', 'docx', 'pdf', 'rtf'].includes(ext)) return <FileText className={className} />;
+
+    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext))
+      return <Image className={className} />;
+    if (["mp4", "avi", "mov", "mkv", "webm"].includes(ext))
+      return <Video className={className} />;
+    if (["mp3", "wav", "flac", "aac", "ogg"].includes(ext))
+      return <Music className={className} />;
+    if (["zip", "rar", "tar", "7z", "gz"].includes(ext))
+      return <Archive className={className} />;
+    if (["txt", "doc", "docx", "pdf", "rtf"].includes(ext))
+      return <FileText className={className} />;
     return <File className={className} />;
   };
 
   const getStatusIcon = (status: string) => {
     const className = "h-4 w-4";
-    
+
     switch (status) {
-      case 'receiving':
+      case "receiving":
         return <Loader2 className={`${className} text-primary animate-spin`} />;
-      case 'completed':
+      case "completed":
         return <CheckCircle2 className={`${className} text-primary`} />;
       default:
         return <Clock className={`${className} text-muted-foreground`} />;
@@ -205,19 +223,19 @@ export default function ReceivePage() {
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatSpeed = (bytesPerSecond: number) => {
-    return formatFileSize(bytesPerSecond) + '/s';
+    return formatFileSize(bytesPerSecond) + "/s";
   };
 
   const formatTime = (seconds: number) => {
-    if (!isFinite(seconds) || seconds < 0) return '—';
+    if (!isFinite(seconds) || seconds < 0) return "—";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
@@ -260,17 +278,18 @@ export default function ReceivePage() {
             <CardContent className="p-0 space-y-3 md:space-y-4">
               <div className="space-y-2">
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  Scan the QR code on the sending device or enter the code manually:
+                  Scan the QR code on the sending device or enter the code
+                  manually:
                 </p>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Enter sender's code"
                     value={clientIdInput}
                     onChange={(e) => setClientIdInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleConnect()}
+                    onKeyPress={(e) => e.key === "Enter" && handleConnect()}
                     className="font-mono text-sm"
                   />
-                  <Button 
+                  <Button
                     onClick={handleConnect}
                     disabled={isConnecting || !clientIdInput.trim()}
                     size="sm"
@@ -290,7 +309,9 @@ export default function ReceivePage() {
 
               {error && (
                 <Alert variant="destructive">
-                  <AlertDescription className="text-sm">{error}</AlertDescription>
+                  <AlertDescription className="text-sm">
+                    {error}
+                  </AlertDescription>
                 </Alert>
               )}
             </CardContent>
@@ -350,19 +371,25 @@ export default function ReceivePage() {
                       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                         {getFileIcon(file.metadata.name)}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate text-sm md:text-base">{file.metadata.name}</p>
+                          <p className="font-medium truncate text-sm md:text-base">
+                            {file.metadata.name}
+                          </p>
                           <p className="text-xs md:text-sm text-muted-foreground">
-                            {file.metadata.size > 0 ? formatFileSize(file.metadata.size) : 'Size unknown'}
+                            {file.metadata.size > 0
+                              ? formatFileSize(file.metadata.size)
+                              : "Size unknown"}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
                           {getStatusIcon(file.status)}
                           <span className="hidden md:inline text-xs text-muted-foreground capitalize">
-                            {file.status === 'receiving' ? 'Receiving' : 'Complete'}
+                            {file.status === "receiving"
+                              ? "Receiving"
+                              : "Complete"}
                           </span>
                         </div>
                       </div>
-                      {file.status === 'completed' && (
+                      {file.status === "completed" && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -370,19 +397,23 @@ export default function ReceivePage() {
                           className="h-8 min-w-[80px]"
                         >
                           <Download className="h-4 w-4" />
-                          <span className="hidden sm:inline ml-2">Download</span>
+                          <span className="hidden sm:inline ml-2">
+                            Download
+                          </span>
                         </Button>
                       )}
                     </div>
-                    
-                    {file.status === 'receiving' && file.progress > 0 && (
+
+                    {file.status === "receiving" && file.progress > 0 && (
                       <div className="space-y-1 md:space-y-2">
                         <Progress value={file.progress} />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{Math.round(file.progress)}%</span>
                           <div className="flex gap-2 md:gap-4">
                             {file.transferRate && (
-                              <span>Speed: {formatSpeed(file.transferRate)}</span>
+                              <span>
+                                Speed: {formatSpeed(file.transferRate)}
+                              </span>
                             )}
                             {file.eta !== undefined && file.eta > 0 && (
                               <span>ETA: {formatTime(file.eta)}</span>
