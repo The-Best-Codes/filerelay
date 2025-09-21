@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wifi, ArrowRight } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { ArrowRight, Wifi } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router";
 
 export default function InstructionsPage() {
   const navigate = useNavigate();
