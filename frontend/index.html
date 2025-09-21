@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>P2P Fastest File Sharing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>P2P Fastest File Sharing</h1>
+
+    <div class="container">
+        <div class="card">
+            <h2>Your Client ID</h2>
+            <div id="clientId"></div>
+        </div>
+
+        <div class="card">
+            <h2>Connect to Client</h2>
+            <input type="text" id="targetIdInput" placeholder="Enter Client ID">
+            <button id="connectBtn">Connect</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Send File</h2>
+            <input type="file" id="fileInput">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="status-messages"></div>
+
+    <div id="download-link-container"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
