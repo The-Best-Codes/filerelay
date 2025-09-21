@@ -7,7 +7,7 @@ import ReceivePage from "./pages/ReceivePage";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-[100svh] bg-background text-foreground">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/instructions" element={<InstructionsPage />} />

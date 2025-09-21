@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { ArrowRight, Wifi } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -30,14 +29,14 @@ export default function InstructionsPage() {
           <h1 className="text-xl md:text-2xl font-bold">{title}</h1>
         </div>
 
-        <Card className="p-3 md:p-6">
-          <CardHeader className="text-center p-0 pb-3 md:pb-4">
-            <CardTitle className="flex items-center justify-center gap-2 text-base md:text-lg">
+        <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="text-center p-0 pb-3 md:pb-4">
+            <h2 className="flex items-center justify-center gap-2 text-base md:text-lg font-semibold">
               <Wifi className="h-5 w-5 md:h-6 md:w-6" />
               WiFi Connection Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 md:space-y-6 p-0">
+            </h2>
+          </div>
+          <div className="space-y-4 md:space-y-6 p-0">
             <div className="space-y-3 md:space-y-4">
               <div className="bg-primary/5 p-3 md:p-4 rounded-lg border border-primary/10">
                 <p className="text-xs md:text-sm font-medium mb-2">
@@ -49,29 +48,14 @@ export default function InstructionsPage() {
                 </p>
               </div>
 
-              <div className="space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
-                <div className="flex items-start gap-2 md:gap-3">
-                  <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
-                    1
-                  </div>
-                  <p>Both devices must be on the same WiFi network</p>
-                </div>
-                <div className="flex items-start gap-2 md:gap-3">
-                  <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
-                    2
-                  </div>
-                  <p>
-                    Files are shared directly between devices (no uploads to
-                    cloud)
-                  </p>
-                </div>
-                <div className="flex items-start gap-2 md:gap-3">
-                  <div className="w-5 h-5 md:w-6 md:h-6 bg-secondary rounded-full flex items-center justify-center font-medium text-xs flex-shrink-0 mt-0.5">
-                    3
-                  </div>
-                  <p>Keep both devices active during the transfer</p>
-                </div>
-              </div>
+              <ul className="list-disc pl-5 space-y-2 md:space-y-3 text-xs md:text-sm text-muted-foreground">
+                <li>Both devices must be on the same WiFi network</li>
+                <li>
+                  Files are shared directly between devices (no uploads to
+                  cloud)
+                </li>
+                <li>Keep both devices active during the transfer</li>
+              </ul>
             </div>
 
             <div className="flex gap-2 md:gap-3">
@@ -85,11 +69,11 @@ export default function InstructionsPage() {
               </Button>
               <Button onClick={handleContinue} className="flex-1" size="sm">
                 Continue
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="size-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
