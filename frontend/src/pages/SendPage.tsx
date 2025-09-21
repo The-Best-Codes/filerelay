@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import SocketService, {
   type ConnectionStatus,
@@ -256,7 +255,7 @@ export default function SendPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Setting up connection...</p>
         </div>
@@ -278,14 +277,14 @@ export default function SendPage() {
         </div>
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
+              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <QrCode className="h-4 w-4 md:h-5 md:w-5" />
                 Connection
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 space-y-3 md:space-y-4">
+              </h2>
+            </div>
+            <div className="p-0 space-y-3 md:space-y-4">
               {qrCodeUrl && (
                 <div className="flex flex-col items-center space-y-2 md:space-y-3">
                   <img
@@ -323,12 +322,12 @@ export default function SendPage() {
                   </>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
+              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Upload className="h-4 w-4 md:h-5 md:w-5" />
                 Files to Send
                 {files.length > 0 && (
@@ -336,9 +335,9 @@ export default function SendPage() {
                     {files.length}
                   </span>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+              </h2>
+            </div>
+            <div className="p-0">
               <div
                 className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors ${
                   isDragOver ? "border-primary bg-primary/5" : "border-border"
@@ -371,17 +370,17 @@ export default function SendPage() {
                   onChange={handleFileSelect}
                 />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
 
         {files.length > 0 && (
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base md:text-lg">
+                <h2 className="text-base md:text-lg font-semibold">
                   File Queue
-                </CardTitle>
+                </h2>
                 <div className="flex items-center gap-2 md:gap-4">
                   {overallProgress > 0 && (
                     <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
@@ -414,8 +413,8 @@ export default function SendPage() {
               {overallProgress > 0 && (
                 <Progress value={overallProgress} className="w-full" />
               )}
-            </CardHeader>
-            <CardContent className="p-0">
+            </div>
+            <div className="p-0">
               <div className="space-y-2 md:space-y-3">
                 {files.map((fileItem, index) => (
                   <div
@@ -482,8 +481,8 @@ export default function SendPage() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {!connectionStatus.isConnected && (

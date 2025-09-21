@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import SocketService, {
@@ -242,7 +241,7 @@ export default function ReceivePage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Connecting to sender...</p>
         </div>
@@ -264,14 +263,14 @@ export default function ReceivePage() {
         </div>
 
         {!connectionStatus.isConnected && !clientIdFromUrl && (
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
+              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <QrCode className="h-4 w-4 md:h-5 md:w-5" />
                 Connect to Sender
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 space-y-3 md:space-y-4">
+              </h2>
+            </div>
+            <div className="p-0 space-y-3 md:space-y-4">
               <div className="space-y-2">
                 <p className="text-xs md:text-sm text-muted-foreground">
                   Scan the QR code on the sending device or enter the code
@@ -310,19 +309,19 @@ export default function ReceivePage() {
                   </AlertDescription>
                 </Alert>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {(connectionStatus.isConnected || isConnecting) && (
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
+              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Users className="h-4 w-4 md:h-5 md:w-5" />
                 Connection Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+              </h2>
+            </div>
+            <div className="p-0">
               <div className="flex items-center gap-2">
                 {connectionStatus.isConnected ? (
                   <>
@@ -342,22 +341,22 @@ export default function ReceivePage() {
                   </>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {receivedFiles.length > 0 && (
-          <Card className="p-3 md:p-6">
-            <CardHeader className="p-0 pb-3 md:pb-4">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+            <div className="p-0 pb-3 md:pb-4">
+              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Download className="h-4 w-4 md:h-5 md:w-5" />
                 Received Files
                 <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
                   {receivedFiles.length}
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+              </h2>
+            </div>
+            <div className="p-0">
               <div className="space-y-2 md:space-y-3">
                 {receivedFiles.map((file, index) => (
                   <div key={index} className="border rounded-lg p-3 md:p-4">
@@ -419,8 +418,8 @@ export default function ReceivePage() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {connectionStatus.isConnected && receivedFiles.length === 0 && (
