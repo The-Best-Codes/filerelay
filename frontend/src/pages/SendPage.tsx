@@ -9,6 +9,7 @@ import { triggerHapticFeedback } from "@/utils/haptics";
 import {
   Archive,
   ArrowLeft,
+  CheckCircle2,
   File,
   FileText,
   Image,
@@ -16,7 +17,6 @@ import {
   Music,
   QrCode,
   Upload,
-  Users,
   Video,
   Wifi,
   X,
@@ -290,7 +290,7 @@ export default function SendPage() {
               <div className="flex items-center gap-2">
                 {connectionStatus.isConnected ? (
                   <>
-                    <Users className="h-3 w-3 md:h-4 md:w-4" />
+                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
                     <span className="text-xs md:text-sm font-medium">
                       Connected
                     </span>
@@ -299,7 +299,7 @@ export default function SendPage() {
                   <>
                     <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     <span className="text-xs md:text-sm text-muted-foreground">
-                      Waiting for receiver...
+                      Waiting for other devices...
                     </span>
                   </>
                 )}
@@ -321,7 +321,7 @@ export default function SendPage() {
             </div>
             <div className="p-0 flex-1">
               <div
-                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors h-full ${
+                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors cursor-pointer flex flex-col justify-center h-full ${
                   isDragOver ? "border-primary bg-primary/5" : "border-border"
                 }`}
                 onDragOver={handleDragOver}
