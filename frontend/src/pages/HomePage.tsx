@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileUp, Wifi } from "lucide-react";
 import { useNavigate } from "react-router";
 
@@ -16,32 +15,31 @@ export default function HomePage() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2">
+        <div className="rounded-lg border bg-background shadow-sm">
+          <div className="text-center pt-6 pb-4">
+            <h2 className="flex items-center justify-center gap-2 text-xl font-semibold">
               <Wifi className="size-5" />I want to...
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </h2>
+          </div>
+          <div className="p-6 pt-0 space-y-0">
             <Button
               size="lg"
-              className="w-full h-16 text-lg"
+              className="w-full h-16 text-lg rounded-b-none border-b border-border"
               onClick={() => navigate("/instructions?go=send")}
             >
-              <FileUp className="size-6" />
+              <FileUp className="size-6 mr-2" />
               Send files
             </Button>
-
             <Button
               size="lg"
-              className="w-full h-16 text-lg"
+              className="w-full h-16 text-lg rounded-t-none"
               onClick={() => navigate("/instructions?go=receive")}
             >
-              <Download className="size-6" />
+              <Download className="size-6 mr-2" />
               Receive files
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
