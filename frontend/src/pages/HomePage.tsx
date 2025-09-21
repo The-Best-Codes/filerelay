@@ -24,6 +24,7 @@ export default function HomePage() {
           <div className="p-6 pt-0 space-y-0">
             <Button
               size="lg"
+              variant="outline"
               className="w-full h-16 text-lg rounded-b-none border-b border-border"
               onClick={() => navigate("/instructions?go=send")}
             >
@@ -32,7 +33,8 @@ export default function HomePage() {
             </Button>
             <Button
               size="lg"
-              className="w-full h-16 text-lg rounded-t-none"
+              variant="outline"
+              className="w-full h-16 text-lg rounded-t-none border-t-0"
               onClick={() => navigate("/instructions?go=receive")}
             >
               <Download className="size-6" />
