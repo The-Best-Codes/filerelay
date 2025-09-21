@@ -34,6 +34,7 @@ class SocketService {
   private onConnectionStatusCallback?: (status: ConnectionStatus) => void;
   private onFileReceiveCallback?: (file: Blob, metadata: FileMetadata) => void;
   private onTransferProgressCallback?: (progress: FileTransferProgress) => void;
+  private onMetadataReceiveCallback?: (metadata: FileMetadata) => void;
   private onErrorCallback?: (error: string) => void;
 
   // File transfer state
@@ -91,7 +92,7 @@ class SocketService {
       console.log('Socket ready');
     });
 
-    this.socket.on('message', (message: any) => {
+    this.socket.on('message', (message: unknown) => {
       this.handleSignalingMessage(message);
     });
 
@@ -167,12 +168,13 @@ class SocketService {
     };
   }
 
-  private handleSignalingMessage(message: any) {
-    if (message.type === 'offer') {
+  private handleSignalingMessage(message: unknown) {
+    const msg = message as { type: string; sdpMLineIndex?: number; candidate?: string; label?: number };
+    if (msg.type === 'offer') {
       if (!this.peerConnection) {
         this.createPeerConnection();
       }
-      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(message))
+      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(msg as RTCSessionDescriptionInit))
         .then(() => this.peerConnection?.createAnswer())
         .then(answer => this.peerConnection?.setLocalDescription(answer))
         .then(() => {
@@ -182,16 +184,16 @@ class SocketService {
           console.error('Error handling offer:', e);
           this.onErrorCallback?.('Failed to handle connection offer');
         });
-    } else if (message.type === 'answer') {
-      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(message))
+    } else if (msg.type === 'answer') {
+      this.peerConnection?.setRemoteDescription(new RTCSessionDescription(msg as RTCSessionDescriptionInit))
         .catch(e => {
           console.error('Error handling answer:', e);
           this.onErrorCallback?.('Failed to handle connection answer');
         });
-    } else if (message.type === 'candidate') {
+    } else if (msg.type === 'candidate') {
       const candidate = new RTCIceCandidate({
-        sdpMLineIndex: message.label,
-        candidate: message.candidate,
+        sdpMLineIndex: msg.label,
+        candidate: msg.candidate,
       });
       this.peerConnection?.addIceCandidate(candidate)
         .catch(e => {
@@ -207,6 +209,11 @@ class SocketService {
       this.receivedSize = 0;
       this.receivedBuffer = [];
       this.transferStartTime = Date.now();
+      
+      // Notify about metadata
+      if (this.fileMetadata) {
+        this.onMetadataReceiveCallback?.(this.fileMetadata);
+      }
       
       this.onTransferProgressCallback?.({
         fileIndex: 0,
@@ -260,7 +267,7 @@ class SocketService {
     }
   }
 
-  private sendMessage(message: any, room: string) {
+  private sendMessage(message: unknown, room: string) {
     this.socket?.emit('message', message, room);
   }
 
@@ -380,6 +387,10 @@ class SocketService {
 
   onTransferProgress(callback: (progress: FileTransferProgress) => void) {
     this.onTransferProgressCallback = callback;
+  }
+
+  onMetadataReceive(callback: (metadata: FileMetadata) => void) {
+    this.onMetadataReceiveCallback = callback;
   }
 
   onError(callback: (error: string) => void) {

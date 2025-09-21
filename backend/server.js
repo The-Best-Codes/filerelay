@@ -12,6 +12,11 @@ const PORT = process.env.PORT || 1869;
 
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
+// Fallback to serve index.html for client-side routing
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
 const clients = {};
 
 io.on('connection', (socket) => {

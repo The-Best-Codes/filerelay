@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Upload, 
@@ -18,11 +16,14 @@ import {
   Wifi,
   QrCode,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import SocketService, { type FileTransferProgress, type ConnectionStatus } from '@/services/SocketService';
+import { triggerHapticFeedback } from '@/utils/haptics';
 
 interface FileWithProgress {
   file: File;
@@ -57,6 +58,9 @@ export default function SendPage() {
 
     socketService.onConnectionStatus((status) => {
       setConnectionStatus(status);
+      if (status.isConnected) {
+        triggerHapticFeedback('medium');
+      }
     });
 
     socketService.onTransferProgress((progress) => {
@@ -92,22 +96,38 @@ export default function SendPage() {
   };
 
   const updateFileProgress = (progress: FileTransferProgress) => {
-    setFiles(prev => prev.map((fileItem, index) => {
-      if (index === progress.fileIndex) {
-        return {
-          ...fileItem,
-          progress: progress.progress,
-          status: progress.status,
-          transferRate: progress.transferRate,
-          eta: progress.eta
-        };
-      }
-      return fileItem;
-    }));
+    setFiles(prev => {
+      const updated = prev.map((fileItem, index) => {
+        if (index === progress.fileIndex) {
+          const updatedFile = {
+            ...fileItem,
+            progress: progress.progress,
+            status: progress.status,
+            transferRate: progress.transferRate,
+            eta: progress.eta
+          };
+          
+          // Trigger haptic feedback when file completes
+          if (progress.status === 'completed' && fileItem.status !== 'completed') {
+            triggerHapticFeedback('medium');
+            
+            // Remove completed file after animation
+            setTimeout(() => {
+              setFiles(current => current.filter((_, i) => i !== index));
+            }, 2000);
+          }
+          
+          return updatedFile;
+        }
+        return fileItem;
+      });
 
-    // Update overall progress
-    const totalProgress = files.reduce((sum, file) => sum + file.progress, 0);
-    setOverallProgress(files.length > 0 ? totalProgress / files.length : 0);
+      // Update overall progress
+      const totalProgress = updated.reduce((sum, file) => sum + file.progress, 0);
+      setOverallProgress(updated.length > 0 ? totalProgress / updated.length : 0);
+      
+      return updated;
+    });
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -123,12 +143,14 @@ export default function SendPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+    triggerHapticFeedback('light');
     const droppedFiles = Array.from(e.dataTransfer.files);
     addFiles(droppedFiles);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
+    triggerHapticFeedback('light');
     addFiles(selectedFiles);
   };
 
@@ -142,17 +164,37 @@ export default function SendPage() {
   };
 
   const removeFile = (index: number) => {
+    triggerHapticFeedback('light');
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const getFileIcon = (file: File) => {
     const type = file.type.toLowerCase();
-    if (type.startsWith('image/')) return <Image className="h-5 w-5" />;
-    if (type.startsWith('video/')) return <Video className="h-5 w-5" />;
-    if (type.startsWith('audio/')) return <Music className="h-5 w-5" />;
-    if (type.includes('zip') || type.includes('rar') || type.includes('tar')) return <Archive className="h-5 w-5" />;
-    if (type.includes('text') || type.includes('document')) return <FileText className="h-5 w-5" />;
-    return <File className="h-5 w-5" />;
+    const className = "h-5 w-5";
+    
+    if (type.startsWith('image/')) return <Image className={className} />;
+    if (type.startsWith('video/')) return <Video className={className} />;
+    if (type.startsWith('audio/')) return <Music className={className} />;
+    if (type.includes('zip') || type.includes('rar') || type.includes('tar')) return <Archive className={className} />;
+    if (type.includes('text') || type.includes('document')) return <FileText className={className} />;
+    return <File className={className} />;
+  };
+
+  const getStatusIcon = (status: string) => {
+    const className = "h-4 w-4";
+    
+    switch (status) {
+      case 'waiting':
+        return <Clock className={`${className} text-muted-foreground`} />;
+      case 'transferring':
+        return <Loader2 className={`${className} text-primary animate-spin`} />;
+      case 'completed':
+        return <CheckCircle2 className={`${className} text-primary`} />;
+      case 'error':
+        return <X className={`${className} text-destructive`} />;
+      default:
+        return <Clock className={`${className} text-muted-foreground`} />;
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -177,6 +219,7 @@ export default function SendPage() {
   const handleSendFiles = async () => {
     if (!socketServiceRef.current || files.length === 0) return;
     
+    triggerHapticFeedback('medium');
     setIsSending(true);
     try {
       const filesToSend = files.map(f => f.file);
@@ -187,11 +230,21 @@ export default function SendPage() {
     setIsSending(false);
   };
 
+  const handleBack = () => {
+    triggerHapticFeedback('light');
+    navigate('/');
+  };
+
+  const handleBrowseFiles = () => {
+    triggerHapticFeedback('light');
+    fileInputRef.current?.click();
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Setting up connection...</p>
         </div>
       </div>
@@ -199,44 +252,41 @@ export default function SendPage() {
   }
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen p-2 md:p-4">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+          <Button variant="outline" size="sm" onClick={handleBack}>
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2">Back</span>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-blue-600">Send Files</h1>
-            <p className="text-sm text-muted-foreground">
-              Client ID: <span className="font-mono">{clientId}</span>
-            </p>
+            <h1 className="text-xl md:text-2xl font-bold">Send Files</h1>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
           {/* QR Code and Connection Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <QrCode className="h-5 w-5" />
+          <Card className="p-3 md:p-6">
+            <CardHeader className="p-0 pb-3 md:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                <QrCode className="h-4 w-4 md:h-5 md:w-5" />
                 Connection
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-0 space-y-3 md:space-y-4">
               {qrCodeUrl && (
-                <div className="flex flex-col items-center space-y-3">
+                <div className="flex flex-col items-center space-y-2 md:space-y-3">
                   <img 
                     src={qrCodeUrl} 
                     alt="QR Code" 
-                    className="border-2 border-gray-200 dark:border-gray-700 rounded-lg"
+                    className="w-32 h-32 md:w-64 md:h-64 border-2 border-border rounded-lg"
                   />
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-1">
                       Or enter this code manually:
                     </p>
-                    <div className="bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-md font-mono text-sm">
+                    <div className="bg-muted px-2 py-1 md:px-3 md:py-2 rounded-md font-mono text-xs md:text-sm">
                       {clientId}
                     </div>
                   </div>
@@ -246,15 +296,15 @@ export default function SendPage() {
               <div className="flex items-center gap-2">
                 {connectionStatus.isConnected ? (
                   <>
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                    <Users className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-green-600 font-medium">Connected</span>
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-primary rounded-full animate-pulse" />
+                    <Users className="h-3 w-3 md:h-4 md:w-4" />
+                    <span className="text-xs md:text-sm font-medium">Connected</span>
                   </>
                 ) : (
                   <>
-                    <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />
-                    <Wifi className="h-4 w-4 text-yellow-600" />
-                    <span className="text-sm text-yellow-600">Waiting for receiver...</span>
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-muted-foreground rounded-full animate-pulse" />
+                    <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+                    <span className="text-xs md:text-sm text-muted-foreground">Waiting for receiver...</span>
                   </>
                 )}
               </div>
@@ -262,40 +312,42 @@ export default function SendPage() {
           </Card>
 
           {/* File Upload Area */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
+          <Card className="p-3 md:p-6">
+            <CardHeader className="p-0 pb-3 md:pb-4">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                <Upload className="h-4 w-4 md:h-5 md:w-5" />
                 Files to Send
                 {files.length > 0 && (
-                  <Badge variant="secondary">{files.length}</Badge>
+                  <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
+                    {files.length}
+                  </span>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors ${
                   isDragOver 
-                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' 
-                    : 'border-gray-300 dark:border-gray-600'
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border'
                 }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <div className="space-y-2">
-                  <p className="text-lg font-medium">
+                <Upload className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-4 text-muted-foreground" />
+                <div className="space-y-1 md:space-y-2">
+                  <p className="text-sm md:text-lg font-medium">
                     Drop files here or{' '}
                     <Button 
                       variant="link" 
-                      className="p-0 h-auto text-blue-600"
-                      onClick={() => fileInputRef.current?.click()}
+                      className="p-0 h-auto text-primary"
+                      onClick={handleBrowseFiles}
                     >
                       browse
                     </Button>
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     Add multiple files to send them all at once
                   </p>
                 </div>
@@ -313,30 +365,28 @@ export default function SendPage() {
 
         {/* File List */}
         {files.length > 0 && (
-          <Card>
-            <CardHeader>
+          <Card className="p-3 md:p-6">
+            <CardHeader className="p-0 pb-3 md:pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>File Queue</CardTitle>
-                <div className="flex items-center gap-4">
+                <CardTitle className="text-base md:text-lg">File Queue</CardTitle>
+                <div className="flex items-center gap-2 md:gap-4">
                   {overallProgress > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Overall Progress: {Math.round(overallProgress)}%</span>
+                    <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>Overall: {Math.round(overallProgress)}%</span>
                     </div>
                   )}
                   <Button
+                    size="sm"
                     onClick={handleSendFiles}
                     disabled={!connectionStatus.isConnected || isSending || files.length === 0}
-                    className="min-w-[100px]"
+                    className="min-w-[80px] md:min-w-[100px]"
                   >
                     {isSending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Send Files
+                        <Upload className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-2">Send Files</span>
                       </>
                     )}
                   </Button>
@@ -346,47 +396,52 @@ export default function SendPage() {
                 <Progress value={overallProgress} className="w-full" />
               )}
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="p-0">
+              <div className="space-y-2 md:space-y-3">
                 {files.map((fileItem, index) => (
-                  <div key={index} className="border rounded-lg p-4">
+                  <div 
+                    key={index} 
+                    className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
+                      fileItem.status === 'completed' 
+                        ? 'opacity-0 transform -translate-y-2 scale-95' 
+                        : 'opacity-100 transform translate-y-0 scale-100'
+                    }`}
+                  >
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
                         {getFileIcon(fileItem.file)}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{fileItem.file.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium truncate text-sm md:text-base">{fileItem.file.name}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             {formatFileSize(fileItem.file.size)}
                           </p>
                         </div>
-                        <Badge 
-                          variant={
-                            fileItem.status === 'completed' ? 'default' :
-                            fileItem.status === 'transferring' ? 'secondary' :
-                            fileItem.status === 'error' ? 'destructive' : 'outline'
-                          }
-                        >
-                          {fileItem.status === 'waiting' ? 'Queued' :
-                           fileItem.status === 'transferring' ? 'Sending' :
-                           fileItem.status === 'completed' ? 'Sent' : 'Error'}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(fileItem.status)}
+                          <span className="hidden md:inline text-xs text-muted-foreground capitalize">
+                            {fileItem.status === 'waiting' ? 'Queued' :
+                             fileItem.status === 'transferring' ? 'Sending' :
+                             fileItem.status === 'completed' ? 'Sent' : 'Error'}
+                          </span>
+                        </div>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFile(index)}
                         disabled={fileItem.status === 'transferring'}
+                        className="h-8 w-8 p-0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                     
                     {fileItem.progress > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-1 md:space-y-2">
                         <Progress value={fileItem.progress} />
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>{Math.round(fileItem.progress)}%</span>
-                          <div className="flex gap-4">
+                          <div className="flex gap-2 md:gap-4">
                             {fileItem.transferRate && (
                               <span>Speed: {formatSpeed(fileItem.transferRate)}</span>
                             )}
