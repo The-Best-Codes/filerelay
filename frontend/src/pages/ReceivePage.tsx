@@ -421,7 +421,8 @@ export default function ReceivePage() {
           <Alert>
             <Users className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              Connected! The sender can now start transferring files to you.
+              Connected! Start sending files from your other device and they'll
+              appear here.
             </AlertDescription>
           </Alert>
         )}
