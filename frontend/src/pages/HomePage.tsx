@@ -27,7 +27,7 @@ export default function HomePage() {
               className="w-full h-16 text-lg rounded-b-none border-b border-border"
               onClick={() => navigate("/instructions?go=send")}
             >
-              <FileUp className="size-6 mr-2" />
+              <FileUp className="size-6" />
               Send files
             </Button>
             <Button
@@ -35,7 +35,7 @@ export default function HomePage() {
               className="w-full h-16 text-lg rounded-t-none"
               onClick={() => navigate("/instructions?go=receive")}
             >
-              <Download className="size-6 mr-2" />
+              <Download className="size-6" />
               Receive files
             </Button>
           </div>

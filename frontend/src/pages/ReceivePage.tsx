@@ -240,7 +240,7 @@ export default function ReceivePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[100svh] items-center justify-center">
         <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Connecting to sender...</p>
@@ -250,12 +250,12 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="min-h-screen p-2 md:p-4">
+    <div className="min-h-[100svh] p-2 md:p-4">
       <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Back</span>
+            <span className="hidden sm:inline">Back</span>
           </Button>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Receive Files</h1>
@@ -263,7 +263,7 @@ export default function ReceivePage() {
         </div>
 
         {!connectionStatus.isConnected && !clientIdFromUrl && (
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <QrCode className="h-4 w-4 md:h-5 md:w-5" />
@@ -273,8 +273,8 @@ export default function ReceivePage() {
             <div className="p-0 space-y-3 md:space-y-4">
               <div className="space-y-2">
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  Scan the QR code on the sending device or enter the code
-                  manually:
+                  Use your camera app to scan the QR code shown on the device
+                  sending files, or enter the code manually:
                 </p>
                 <div className="flex gap-2">
                   <Input
@@ -282,13 +282,12 @@ export default function ReceivePage() {
                     value={clientIdInput}
                     onChange={(e) => setClientIdInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                    className="font-mono text-sm"
+                    className="font-mono text-sm h-8"
                   />
                   <Button
                     onClick={handleConnect}
                     disabled={isConnecting || !clientIdInput.trim()}
                     size="sm"
-                    className="min-w-[80px]"
                   >
                     {isConnecting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -314,7 +313,7 @@ export default function ReceivePage() {
         )}
 
         {(connectionStatus.isConnected || isConnecting) && (
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Users className="h-4 w-4 md:h-5 md:w-5" />
@@ -325,7 +324,6 @@ export default function ReceivePage() {
               <div className="flex items-center gap-2">
                 {connectionStatus.isConnected ? (
                   <>
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-primary rounded-full animate-pulse" />
                     <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
                     <span className="text-xs md:text-sm font-medium">
                       Connected and ready to receive files!
@@ -333,7 +331,6 @@ export default function ReceivePage() {
                   </>
                 ) : (
                   <>
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-muted-foreground rounded-full animate-pulse" />
                     <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     <span className="text-xs md:text-sm text-muted-foreground">
                       Connecting to sender...
@@ -346,7 +343,7 @@ export default function ReceivePage() {
         )}
 
         {receivedFiles.length > 0 && (
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Download className="h-4 w-4 md:h-5 md:w-5" />
@@ -387,12 +384,10 @@ export default function ReceivePage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownload(file)}
-                          className="h-8 min-w-[80px]"
+                          className="h-8"
                         >
                           <Download className="h-4 w-4" />
-                          <span className="hidden sm:inline ml-2">
-                            Download
-                          </span>
+                          <span className="hidden sm:inline">Download</span>
                         </Button>
                       )}
                     </div>

@@ -254,7 +254,7 @@ export default function SendPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[100svh] items-center justify-center">
         <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Setting up connection...</p>
@@ -264,12 +264,12 @@ export default function SendPage() {
   }
 
   return (
-    <div className="min-h-screen p-2 md:p-4">
+    <div className="min-h-[100svh] p-2 md:p-4">
       <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline ml-2">Back</span>
+            <span className="hidden sm:inline">Back</span>
           </Button>
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Send Files</h1>
@@ -277,7 +277,7 @@ export default function SendPage() {
         </div>
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <QrCode className="h-4 w-4 md:h-5 md:w-5" />
@@ -285,12 +285,15 @@ export default function SendPage() {
               </h2>
             </div>
             <div className="p-0 space-y-3 md:space-y-4">
+              <p className="text-sm md:text-base text-muted-foreground">
+                Scan this QR code on the device you want to send files to:
+              </p>
               {qrCodeUrl && (
                 <div className="flex flex-col items-center space-y-2 md:space-y-3">
                   <img
                     src={qrCodeUrl}
                     alt="QR Code"
-                    className="w-32 h-32 md:w-64 md:h-64 border-2 border-border rounded-lg"
+                    className="w-48 h-48 md:w-64 md:h-64 border-2 border-border rounded-lg"
                   />
                   <div className="text-center">
                     <p className="text-xs md:text-sm text-muted-foreground mb-1">
@@ -306,7 +309,6 @@ export default function SendPage() {
               <div className="flex items-center gap-2">
                 {connectionStatus.isConnected ? (
                   <>
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-primary rounded-full animate-pulse" />
                     <Users className="h-3 w-3 md:h-4 md:w-4" />
                     <span className="text-xs md:text-sm font-medium">
                       Connected
@@ -314,7 +316,6 @@ export default function SendPage() {
                   </>
                 ) : (
                   <>
-                    <div className="w-2 h-2 md:w-3 md:h-3 bg-muted-foreground rounded-full animate-pulse" />
                     <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                     <span className="text-xs md:text-sm text-muted-foreground">
                       Waiting for receiver...
@@ -325,11 +326,11 @@ export default function SendPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
                 <Upload className="h-4 w-4 md:h-5 md:w-5" />
-                Files to Send
+                Upload Files
                 {files.length > 0 && (
                   <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
                     {files.length}
@@ -345,18 +346,13 @@ export default function SendPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onClick={handleBrowseFiles}
               >
                 <Upload className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-4 text-muted-foreground" />
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-sm md:text-lg font-medium">
                     Drop files here or{" "}
-                    <Button
-                      variant="link"
-                      className="p-0 h-auto text-primary"
-                      onClick={handleBrowseFiles}
-                    >
-                      browse
-                    </Button>
+                    <span className="text-blue-500">browse</span>
                   </p>
                   <p className="text-xs md:text-sm text-muted-foreground">
                     Add multiple files to send them all at once
@@ -375,16 +371,16 @@ export default function SendPage() {
         </div>
 
         {files.length > 0 && (
-          <div className="rounded-lg border bg-background shadow-sm p-3 md:p-6">
+          <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base md:text-lg font-semibold">
-                  File Queue
+                  Send Files
                 </h2>
                 <div className="flex items-center gap-2 md:gap-4">
                   {overallProgress > 0 && (
                     <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Overall: {Math.round(overallProgress)}%</span>
+                      <span>{Math.round(overallProgress)}%</span>
                     </div>
                   )}
                   <Button
@@ -395,16 +391,13 @@ export default function SendPage() {
                       isSending ||
                       files.length === 0
                     }
-                    className="min-w-[80px] md:min-w-[100px]"
                   >
                     {isSending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
                         <Upload className="h-4 w-4" />
-                        <span className="hidden sm:inline ml-2">
-                          Send Files
-                        </span>
+                        <span className="inline">Send Files</span>
                       </>
                     )}
                   </Button>
