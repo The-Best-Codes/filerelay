@@ -284,22 +284,22 @@ export default function SendPage() {
           <span className="hidden sm:inline">Back</span>
         </Button>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Send Files</h1>
+          <h1 className="text-2xl font-bold">Send Files</h1>
         </div>
       </div>
 
       {!connectionStatus.isConnected ? (
         <>
-          <div className="rounded-lg border bg-background p-4 md:p-6">
-            <div className="text-center space-y-4 md:space-y-6">
+          <div className="rounded-lg border bg-background p-6">
+            <div className="text-center space-y-6">
               <div>
-                <h2 className="text-lg md:text-xl font-semibold mb-2">
+                <h2 className="text-xl font-semibold mb-2">
                   Scan this QR code with your other device
                 </h2>
               </div>
 
               {qrCodeUrl && (
-                <div className="flex flex-col items-center space-y-3 md:space-y-4">
+                <div className="flex flex-col items-center space-y-4">
                   <img
                     src={qrCodeUrl}
                     alt="QR Code"
@@ -310,7 +310,7 @@ export default function SendPage() {
                       If you can't, choose "Enter Code" and enter this code
                       manually:
                     </p>
-                    <div className="bg-muted px-3 py-2 md:px-4 md:py-3 rounded-lg font-mono text-sm md:text-base font-semibold">
+                    <div className="bg-muted px-4 py-3 rounded-lg font-mono text-base font-semibold">
                       {clientId}
                     </div>
                   </div>
@@ -323,7 +323,7 @@ export default function SendPage() {
         <>
           {!isSending && !transferCompleted && (
             <div
-              className={`border-2 border-dashed rounded-lg p-6 md:p-8 text-center transition-colors cursor-pointer ${
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
                 isDragOver ? "border-primary bg-primary/5" : "border-border"
               }`}
               onDragOver={handleDragOver}
@@ -332,14 +332,14 @@ export default function SendPage() {
               onClick={handleBrowseFiles}
             >
               <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
-              <div className="space-y-1 md:space-y-2">
-                <p className="text-sm md:text-lg font-medium">
+              <div className="space-y-2">
+                <p className="text-lg font-medium">
                   Drop files here or{" "}
                   <span className="text-blue-600 dark:text-blue-400">
                     browse
                   </span>
                 </p>
-                <p className="text-xs md:text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   You can select multiple files. Files will be sent immediately
                   once you select them.
                 </p>
@@ -372,20 +372,20 @@ export default function SendPage() {
               {isSending && (
                 <Progress value={overallProgress} className="w-full" />
               )}
-              <div className="mt-2 space-y-2 md:space-y-3">
+              <div className="mt-2 space-y-3">
                 {files.map((fileItem) => (
                   <div
                     key={fileItem.id}
-                    className="w-full border rounded-lg p-3 md:p-4"
+                    className="w-full border rounded-lg p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         {getFileIcon(fileItem.file)}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate text-sm md:text-base">
+                          <p className="font-medium truncate text-base">
                             {fileItem.file.name}
                           </p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground">
                             {formatFileSize(fileItem.file.size)}
                             {fileItem.status === "error" && (
                               <span className="ml-2 text-red-500">
@@ -399,7 +399,7 @@ export default function SendPage() {
                     </div>
 
                     {(fileItem.progress > 0 || fileItem.status === "error") && (
-                      <div className="space-y-1 md:space-y-2 mt-2">
+                      <div className="space-y-2 mt-2">
                         {fileItem.status !== "error" && (
                           <Progress value={fileItem.progress} />
                         )}
@@ -412,7 +412,7 @@ export default function SendPage() {
                           {!fileItem.status ||
                           fileItem.status === "waiting" ||
                           fileItem.status === "transferring" ? (
-                            <div className="flex gap-2 md:gap-4">
+                            <div className="flex gap-3">
                               {fileItem.transferRate && (
                                 <span>
                                   Speed: {formatSpeed(fileItem.transferRate)}
@@ -436,7 +436,7 @@ export default function SendPage() {
           {transferCompleted && (
             <div className="mt-4 flex flex-col items-center justify-center p-8 text-center rounded-lg border bg-background">
               <CheckCircle2 className="h-16 w-16 text-green-500 mb-3" />
-              <p className="font-semibold mb-4 text-lg md:text-xl">
+              <p className="font-semibold mb-4 text-xl">
                 All files have been sent.
               </p>
               <Button onClick={() => setTransferCompleted(false)}>
