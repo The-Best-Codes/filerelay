@@ -277,7 +277,7 @@ export default function SendPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
+    <div className="max-w-md w-full mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" />
@@ -376,7 +376,7 @@ export default function SendPage() {
                 {files.map((fileItem) => (
                   <div
                     key={fileItem.id}
-                    className="border rounded-lg p-3 md:p-4"
+                    className="w-full border rounded-lg p-3 md:p-4"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
