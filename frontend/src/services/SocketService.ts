@@ -70,7 +70,10 @@ class SocketService {
 
       if (this.isInitiator) {
         this.peerConnection
-          ?.createOffer()
+          ?.createOffer({
+            offerToReceiveAudio: false,
+            offerToReceiveVideo: false,
+          })
           .then((offer) => this.peerConnection?.setLocalDescription(offer))
           .then(() => {
             this.sendMessage(this.peerConnection?.localDescription, roomName);
