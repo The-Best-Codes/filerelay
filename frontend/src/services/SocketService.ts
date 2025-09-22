@@ -245,7 +245,11 @@ class SocketService {
     this.receivedSize += event.data.byteLength;
 
     if (this.fileMetadata) {
-      const progress = (this.receivedSize / this.fileMetadata.size) * 100;
+      // Cap progress at 100% for display
+      const progress = Math.min(
+        100,
+        (this.receivedSize / this.fileMetadata.size) * 100,
+      );
       const elapsedTime = (Date.now() - this.transferStartTime) / 1000;
       const transferRate = this.receivedSize / elapsedTime;
       const eta = (this.fileMetadata.size - this.receivedSize) / transferRate;
@@ -354,7 +358,8 @@ class SocketService {
               const elapsedTime = (Date.now() - startTime) / 1000;
               const transferRate = offset / elapsedTime;
               const eta = (file.size - offset) / transferRate;
-              const progress = (offset / file.size) * 100;
+              // Cap progress at 100% for display
+              const progress = Math.min(100, (offset / file.size) * 100);
 
               this.onTransferProgressCallback?.({
                 fileIndex,
