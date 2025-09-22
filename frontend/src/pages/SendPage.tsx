@@ -434,9 +434,11 @@ export default function SendPage() {
           )}
 
           {transferCompleted && (
-            <div className="mt-4 flex flex-col items-center justify-center p-8 text-center">
-              <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
-              <p className="font-semibold mb-4">All files have been sent.</p>
+            <div className="mt-4 flex flex-col items-center justify-center p-8 text-center rounded-lg border bg-background">
+              <CheckCircle2 className="h-16 w-16 text-green-500 mb-3" />
+              <p className="font-semibold mb-4 text-lg md:text-xl">
+                All files have been sent.
+              </p>
               <Button onClick={() => setTransferCompleted(false)}>
                 Send More
               </Button>
