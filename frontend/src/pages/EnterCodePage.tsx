@@ -5,6 +5,8 @@ import { ArrowRight, TextCursorInput } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+// TODO: Validate client ID format
+
 export default function EnterCodePage() {
   const navigate = useNavigate();
   const [clientId, setClientId] = useState("");

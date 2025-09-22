@@ -1,6 +1,5 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import SocketService, {
   type ConnectionStatus,
@@ -38,8 +37,6 @@ export default function ReceivePage() {
   const clientIdFromUrl = searchParams.get("client-id");
 
   const [isLoading, setIsLoading] = useState(!!clientIdFromUrl);
-  const [clientIdInput, setClientIdInput] = useState(clientIdFromUrl || "");
-  const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
     isConnected: false,
   });
@@ -51,8 +48,10 @@ export default function ReceivePage() {
   useEffect(() => {
     if (clientIdFromUrl) {
       connectToSender(clientIdFromUrl);
+    } else {
+      navigate("/enter-code");
     }
-  }, [clientIdFromUrl]);
+  }, [clientIdFromUrl, navigate]);
 
   const connectToSender = async (targetClientId: string) => {
     if (!targetClientId.trim()) {
@@ -60,7 +59,6 @@ export default function ReceivePage() {
       return;
     }
 
-    setIsConnecting(true);
     setError(null);
 
     try {
@@ -71,7 +69,6 @@ export default function ReceivePage() {
         setConnectionStatus(status);
         if (status.isConnected) {
           setIsLoading(false);
-          setIsConnecting(false);
           triggerHapticFeedback("medium");
         }
       });
@@ -149,7 +146,6 @@ export default function ReceivePage() {
 
       socketService.onError((errorMsg) => {
         setError(errorMsg);
-        setIsConnecting(false);
         setIsLoading(false);
       });
 
@@ -158,14 +154,8 @@ export default function ReceivePage() {
       }, 1000);
     } catch {
       setError("Failed to establish connection");
-      setIsConnecting(false);
       setIsLoading(false);
     }
-  };
-
-  const handleConnect = () => {
-    triggerHapticFeedback("light");
-    connectToSender(clientIdInput);
   };
 
   const handleDownload = (file: ReceivedFile) => {
@@ -231,7 +221,7 @@ export default function ReceivePage() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-6">
+    <div className="w-full max-w-md mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="sm" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" />
@@ -242,52 +232,14 @@ export default function ReceivePage() {
         </div>
       </div>
 
-      {!connectionStatus.isConnected && !clientIdFromUrl && (
-        <div className="rounded-lg border bg-background p-3 md:p-6">
-          <div className="p-0 pb-3 md:pb-4">
-            <h2 className="text-lg md:text-xl font-semibold mb-2">
-              Enter Code or Scan QR Code
-            </h2>
-          </div>
-          <div className="p-0 space-y-3 md:space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm md:text-base text-muted-foreground">
-                Scan the QR code with your camera app or enter the code from the
-                sending device:
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter code here..."
-                  value={clientIdInput}
-                  onChange={(e) => setClientIdInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                  className="font-mono text-sm"
-                />
-                <Button
-                  onClick={handleConnect}
-                  disabled={isConnecting || !clientIdInput.trim()}
-                  size="sm"
-                >
-                  {isConnecting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Connect"
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription className="text-sm">{error}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription className="text-sm">{error}</AlertDescription>
+        </Alert>
       )}
 
       {receivedFiles.length > 0 && (
-        <div className="rounded-lg border bg-background p-3 md:p-6">
+        <div className="w-full rounded-lg border bg-background p-3 md:p-6">
           <div className="p-0 pb-3 md:pb-4">
             <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
               <Download className="h-4 w-4 md:h-5 md:w-5" />
