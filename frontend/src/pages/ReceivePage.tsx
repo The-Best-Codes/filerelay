@@ -228,7 +228,7 @@ export default function ReceivePage() {
           <span className="hidden sm:inline">Back</span>
         </Button>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold">Receive Files</h1>
+          <h1 className="text-2xl font-bold">Receive Files</h1>
         </div>
       </div>
 
@@ -239,68 +239,63 @@ export default function ReceivePage() {
       )}
 
       {receivedFiles.length > 0 && (
-        <div className="w-full rounded-lg border bg-background p-3 md:p-6">
-          <div className="p-0">
-            <div className="space-y-2 md:space-y-3">
-              {receivedFiles.map((file, index) => (
-                <div key={index} className="border rounded-lg p-3 md:p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                      {getFileIcon(file.metadata.name)}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate text-sm md:text-base">
-                          {file.metadata.name}
-                        </p>
-                        <p className="text-xs md:text-sm text-muted-foreground">
-                          {file.metadata.size > 0
-                            ? formatFileSize(file.metadata.size)
-                            : "Size unknown"}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(file)}
-                      className="h-8"
-                      disabled={file.status !== "completed"}
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">Download</span>
-                    </Button>
+        <div className="space-y-3">
+          {receivedFiles.map((file, index) => (
+            <div key={index} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {getFileIcon(file.metadata.name)}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate text-base">
+                      {file.metadata.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {file.metadata.size > 0
+                        ? formatFileSize(file.metadata.size)
+                        : "Size unknown"}
+                    </p>
                   </div>
-
-                  {file.status === "receiving" && file.progress > 0 && (
-                    <div className="space-y-1 md:space-y-2 mt-2">
-                      <Progress value={file.progress} />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{Math.round(file.progress)}%</span>
-                        <div className="flex gap-2 md:gap-4">
-                          {file.transferRate && (
-                            <span>Speed: {formatSpeed(file.transferRate)}</span>
-                          )}
-                          {file.eta !== undefined && file.eta > 0 && (
-                            <span>ETA: {formatTime(file.eta)}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload(file)}
+                  disabled={file.status !== "completed"}
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+              </div>
+
+              {file.status === "receiving" && file.progress > 0 && (
+                <div className="space-y-2 mt-2">
+                  <Progress value={file.progress} />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{Math.round(file.progress)}%</span>
+                    <div className="flex gap-3">
+                      {file.transferRate && (
+                        <span>Speed: {formatSpeed(file.transferRate)}</span>
+                      )}
+                      {file.eta !== undefined && file.eta > 0 && (
+                        <span>ETA: {formatTime(file.eta)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ))}
         </div>
       )}
 
       {connectionStatus.isConnected && receivedFiles.length === 0 && (
-        <div className="rounded-lg border bg-background p-4 md:p-6">
-          <div className="flex flex-col items-center justify-center py-6 md:py-8">
-            <CheckCircle2 className="h-12 w-12 md:h-16 md:w-16 text-green-500 mb-3" />
-            <h2 className="text-lg md:text-xl font-semibold mb-2">
+        <div className="rounded-lg border bg-background p-6">
+          <div className="flex flex-col items-center justify-center py-6">
+            <CheckCircle2 className="h-16 w-16 text-green-500 mb-3" />
+            <h2 className="text-xl font-semibold mb-2">
               Ready to receive files!
             </h2>
-            <p className="text-sm md:text-base text-muted-foreground text-center">
+            <p className="text-base text-muted-foreground text-center">
               Start sending files from your other device and they'll appear here
               for download
             </p>
