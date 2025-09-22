@@ -17,10 +17,7 @@ import {
   Image,
   Loader2,
   Music,
-  QrCode,
-  Users,
   Video,
-  Wifi,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -251,24 +248,23 @@ export default function ReceivePage() {
         {!connectionStatus.isConnected && !clientIdFromUrl && (
           <div className="rounded-lg border bg-background p-3 md:p-6">
             <div className="p-0 pb-3 md:pb-4">
-              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-                <QrCode className="h-4 w-4 md:h-5 md:w-5" />
-                Connect to Sender
+              <h2 className="text-lg md:text-xl font-semibold mb-2">
+                Enter Code or Scan QR Code
               </h2>
             </div>
             <div className="p-0 space-y-3 md:space-y-4">
               <div className="space-y-2">
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  Use your camera app to scan the QR code shown on the device
-                  sending files, or enter the code manually:
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Scan the QR code with your camera app or enter the code from
+                  the sending device:
                 </p>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter sender's code"
+                    placeholder="Enter code here..."
                     value={clientIdInput}
                     onChange={(e) => setClientIdInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                    className="font-mono text-sm h-8"
+                    className="font-mono text-sm"
                   />
                   <Button
                     onClick={handleConnect}
@@ -278,10 +274,7 @@ export default function ReceivePage() {
                     {isConnecting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <>
-                        <span className="sm:hidden">Go</span>
-                        <span className="hidden sm:inline">Connect</span>
-                      </>
+                      "Connect"
                     )}
                   </Button>
                 </div>
@@ -294,36 +287,6 @@ export default function ReceivePage() {
                   </AlertDescription>
                 </Alert>
               )}
-            </div>
-          </div>
-        )}
-
-        {(connectionStatus.isConnected || isConnecting) && (
-          <div className="rounded-lg border bg-background p-3 md:p-6">
-            <div className="p-0 pb-3 md:pb-4">
-              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-                <Users className="h-4 w-4 md:h-5 md:w-5" />
-                Connection Status
-              </h2>
-            </div>
-            <div className="p-0">
-              <div className="flex items-center gap-1">
-                {connectionStatus.isConnected ? (
-                  <>
-                    <CheckCircle2 className="h-3 w-3 md:h-4 md:w-4" />
-                    <span className="text-xs md:text-sm font-medium">
-                      Connected and ready to receive files!
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                    <span className="text-xs md:text-sm text-muted-foreground">
-                      Connecting to sender...
-                    </span>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         )}
@@ -395,13 +358,18 @@ export default function ReceivePage() {
         )}
 
         {connectionStatus.isConnected && receivedFiles.length === 0 && (
-          <Alert>
-            <Users className="h-4 w-4" />
-            <AlertDescription className="text-sm">
-              Connected! Start sending files from your other device and they'll
-              appear here.
-            </AlertDescription>
-          </Alert>
+          <div className="rounded-lg border bg-background p-4 md:p-6">
+            <div className="flex flex-col items-center justify-center py-6 md:py-8">
+              <CheckCircle2 className="h-12 w-12 md:h-16 md:w-16 text-green-500 mb-3" />
+              <h2 className="text-lg md:text-xl font-semibold mb-2">
+                Ready to receive files!
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground text-center">
+                Start sending files from your other device and they'll appear
+                here for download
+              </p>
+            </div>
+          </div>
         )}
       </div>
     </div>

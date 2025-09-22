@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Download, FileUp, Wifi } from "lucide-react";
+import { Download, FileUp } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export default function HomePage() {
@@ -18,7 +18,7 @@ export default function HomePage() {
         <div className="rounded-lg border bg-background shadow-sm">
           <div className="text-center pt-6 pb-4">
             <h2 className="flex items-center justify-center gap-2 text-xl font-semibold">
-              <Wifi className="size-5" />I want to...
+              I want to...
             </h2>
           </div>
           <div className="p-6 pt-0 space-y-0">

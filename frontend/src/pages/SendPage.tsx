@@ -1,4 +1,3 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import SocketService, {
@@ -15,7 +14,6 @@ import {
   Image,
   Loader2,
   Music,
-  QrCode,
   Upload,
   Video,
   Wifi,
@@ -255,7 +253,7 @@ export default function SendPage() {
 
   return (
     <div className="min-h-[100svh] p-2 md:p-4">
-      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
@@ -266,74 +264,75 @@ export default function SendPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border bg-background p-3 md:p-6">
-            <div className="p-0 pb-3 md:pb-4">
-              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-                <QrCode className="h-4 w-4 md:h-5 md:w-5" />
-                Connection
-              </h2>
-            </div>
-            <div className="p-0 space-y-3 md:space-y-4">
-              {connectionStatus.isConnected ? (
-                <div className="flex flex-col items-center justify-center py-8 md:py-12">
-                  <CheckCircle2 className="h-16 w-16 text-green-500" />
-                  <p className="text-xl md:text-2xl font-semibold mt-1">
-                    Connected and ready!
-                  </p>
+        {!connectionStatus.isConnected ? (
+          <>
+            <div className="rounded-lg border bg-background p-4 md:p-6">
+              <div className="text-center space-y-4 md:space-y-6">
+                <div>
+                  <h2 className="text-lg md:text-xl font-semibold mb-2">
+                    Connect with another device
+                  </h2>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    You can now send files to the connected device.
+                    Scan this QR code with your other device:
                   </p>
                 </div>
-              ) : (
-                <>
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    Scan this QR code on the device you want to send files to:
-                  </p>
-                  {qrCodeUrl && (
-                    <div className="flex flex-col items-center space-y-2 md:space-y-3">
-                      <img
-                        src={qrCodeUrl}
-                        alt="QR Code"
-                        className="w-48 h-48 md:w-64 md:h-64 border-2 border-border rounded-lg"
-                      />
-                      <div className="text-center">
-                        <p className="text-xs md:text-sm text-muted-foreground mb-1">
-                          Or enter this code manually:
-                        </p>
-                        <div className="bg-muted px-2 py-1 md:px-3 md:py-2 rounded-md font-mono text-xs md:text-sm">
-                          {clientId}
-                        </div>
+
+                {qrCodeUrl && (
+                  <div className="flex flex-col items-center space-y-3 md:space-y-4">
+                    <img
+                      src={qrCodeUrl}
+                      alt="QR Code"
+                      className="w-56 h-56 md:w-64 md:h-64 border-2 border-border rounded-lg"
+                    />
+                    <div className="text-center">
+                      <p className="text-xs md:text-sm text-muted-foreground mb-2">
+                        Or enter this code in BCShare on your other device:
+                      </p>
+                      <div className="bg-muted px-3 py-2 md:px-4 md:py-3 rounded-lg font-mono text-sm md:text-base font-semibold">
+                        {clientId}
                       </div>
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <Wifi className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                    <span className="text-xs md:text-sm text-muted-foreground">
-                      Waiting for other devices...
-                    </span>
                   </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-background p-3 md:p-6 flex flex-col">
-            <div className="p-0 pb-3 md:pb-4">
-              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-                <Upload className="h-4 w-4 md:h-5 md:w-5" />
-                Upload Files
-                {files.length > 0 && (
-                  <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
-                    {files.length}
-                  </span>
                 )}
-              </h2>
+
+                <div className="flex items-center justify-center gap-2">
+                  <Wifi className="h-4 w-4 text-muted-foreground animate-pulse" />
+                  <span className="text-sm md:text-base text-muted-foreground">
+                    Waiting for connection...
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="p-0 flex-1">
+          </>
+        ) : (
+          <>
+            <div className="rounded-lg border bg-background p-4 md:p-6">
+              <div className="flex flex-col items-center justify-center py-6 md:py-8">
+                <CheckCircle2 className="h-12 w-12 md:h-16 md:w-16 text-green-500 mb-3" />
+                <h2 className="text-lg md:text-xl font-semibold mb-2">
+                  Connected and ready!
+                </h2>
+                <p className="text-sm md:text-base text-muted-foreground text-center">
+                  You can now select files to send to the connected device
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-background p-4 md:p-6">
+              <div className="mb-4">
+                <h2 className="flex items-center gap-2 text-lg md:text-xl font-semibold">
+                  <Upload className="h-5 w-5 md:h-6 md:w-6" />
+                  Select Files to Send
+                  {files.length > 0 && (
+                    <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
+                      {files.length}
+                    </span>
+                  )}
+                </h2>
+              </div>
+
               <div
-                className={`border-2 border-dashed rounded-lg p-4 md:p-8 text-center transition-colors cursor-pointer flex flex-col justify-center h-full ${
+                className={`border-2 border-dashed rounded-lg p-6 md:p-8 text-center transition-colors cursor-pointer ${
                   isDragOver ? "border-primary bg-primary/5" : "border-border"
                 }`}
                 onDragOver={handleDragOver}
@@ -341,7 +340,7 @@ export default function SendPage() {
                 onDrop={handleDrop}
                 onClick={handleBrowseFiles}
               >
-                <Upload className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2 md:mb-4 text-muted-foreground" />
+                <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-sm md:text-lg font-medium">
                     Drop files here or{" "}
@@ -359,122 +358,120 @@ export default function SendPage() {
                   onChange={handleFileSelect}
                 />
               </div>
-            </div>
-          </div>
-        </div>
 
-        {(files.length > 0 || transferCompleted) && (
-          <div className="rounded-lg border bg-background p-3 md:p-6">
-            <div className="p-0 pb-3 md:pb-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base md:text-lg font-semibold">
-                  Send Files
-                </h2>
-                <div className="flex items-center gap-2 md:gap-4">
-                  {overallProgress > 0 && files.length > 0 && (
-                    <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>{Math.round(overallProgress)}%</span>
-                    </div>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={handleSendFiles}
-                    disabled={
-                      !connectionStatus.isConnected ||
-                      isSending ||
-                      files.length === 0
-                    }
-                  >
-                    {isSending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span className="inline">Send Files</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-              {overallProgress > 0 && files.length > 0 && (
-                <Progress value={overallProgress} className="w-full mt-2" />
-              )}
-            </div>
-            <div className="p-0">
-              {files.length > 0 ? (
-                <div className="space-y-2 md:space-y-3">
-                  {files.map((fileItem, index) => (
-                    <div
-                      key={index}
-                      className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
-                        fileItem.status === "completed"
-                          ? "opacity-0 transform -translate-y-2 scale-95"
-                          : "opacity-100 transform translate-y-0 scale-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                          {getFileIcon(fileItem.file)}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate text-sm md:text-base">
-                              {fileItem.file.name}
-                            </p>
-                            <p className="text-xs md:text-sm text-muted-foreground">
-                              {formatFileSize(fileItem.file.size)}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          disabled={fileItem.status === "transferring"}
-                          className="h-8 w-8 p-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {fileItem.progress > 0 && (
-                        <div className="space-y-1 md:space-y-2 mt-2">
-                          <Progress value={fileItem.progress} />
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{Math.round(fileItem.progress)}%</span>
-                            <div className="flex gap-2 md:gap-4">
-                              {fileItem.transferRate && (
-                                <span>
-                                  Speed: {formatSpeed(fileItem.transferRate)}
-                                </span>
-                              )}
-                              {fileItem.eta !== undefined &&
-                                fileItem.eta > 0 && (
-                                  <span>ETA: {formatTime(fileItem.eta)}</span>
-                                )}
-                            </div>
-                          </div>
-                        </div>
+              {files.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {files.length} file{files.length !== 1 ? "s" : ""}{" "}
+                        selected
+                      </span>
+                      {overallProgress > 0 && (
+                        <span className="text-sm text-muted-foreground">
+                          ({Math.round(overallProgress)}%)
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                  <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
-                  <p className="font-semibold">All files have been sent.</p>
+                    <Button
+                      size="sm"
+                      onClick={handleSendFiles}
+                      disabled={
+                        !connectionStatus.isConnected ||
+                        isSending ||
+                        files.length === 0
+                      }
+                    >
+                      {isSending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4" />
+                          <span className="inline">Send Files</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {overallProgress > 0 && files.length > 0 && (
+                    <Progress value={overallProgress} className="w-full" />
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        )}
 
-        {!connectionStatus.isConnected && (
-          <Alert>
-            <Wifi className="h-4 w-4" />
-            <AlertDescription>
-              Share the QR code or client ID with the receiving device. Both
-              devices must be on the same WiFi network.
-            </AlertDescription>
-          </Alert>
+            {(files.length > 0 || transferCompleted) && (
+              <div className="rounded-lg border bg-background p-4 md:p-6">
+                <div className="mb-4">
+                  <h2 className="text-lg md:text-xl font-semibold">
+                    File Transfer
+                  </h2>
+                </div>
+                {files.length > 0 ? (
+                  <div className="space-y-2 md:space-y-3">
+                    {files.map((fileItem, index) => (
+                      <div
+                        key={index}
+                        className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
+                          fileItem.status === "completed"
+                            ? "opacity-0 transform -translate-y-2 scale-95"
+                            : "opacity-100 transform translate-y-0 scale-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                            {getFileIcon(fileItem.file)}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate text-sm md:text-base">
+                                {fileItem.file.name}
+                              </p>
+                              <p className="text-xs md:text-sm text-muted-foreground">
+                                {formatFileSize(fileItem.file.size)}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            disabled={fileItem.status === "transferring"}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        {fileItem.progress > 0 && (
+                          <div className="space-y-1 md:space-y-2 mt-2">
+                            <Progress value={fileItem.progress} />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>{Math.round(fileItem.progress)}%</span>
+                              <div className="flex gap-2 md:gap-4">
+                                {fileItem.transferRate && (
+                                  <span>
+                                    Speed: {formatSpeed(fileItem.transferRate)}
+                                  </span>
+                                )}
+                                {fileItem.eta !== undefined &&
+                                  fileItem.eta > 0 && (
+                                    <span>ETA: {formatTime(fileItem.eta)}</span>
+                                  )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-center">
+                    <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
+                    <p className="font-semibold">All files have been sent.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
