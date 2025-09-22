@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Download, FileUp } from "lucide-react";
+import { FileUp, TextCursorInput } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export default function HomePage() {
@@ -18,16 +18,16 @@ export default function HomePage() {
           onClick={() => navigate("/instructions?go=send")}
         >
           <FileUp className="size-6" />
-          Send files
+          Send Files
         </Button>
         <Button
           size="lg"
           variant="outline"
           className="w-full h-16 text-lg rounded-t-none border-t-0"
-          onClick={() => navigate("/instructions?go=receive")}
+          onClick={() => navigate("/instructions?go=enter-code")}
         >
-          <Download className="size-6" />
-          Receive files
+          <TextCursorInput className="size-6" />
+          Enter Code
         </Button>
       </div>
     </div>

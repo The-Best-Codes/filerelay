@@ -9,8 +9,8 @@ export default function InstructionsPage() {
   const action = searchParams.get("go");
 
   const isSending = action === "send";
-  const title = isSending ? "Send Files" : "Receive Files";
-  const nextRoute = isSending ? "/send" : "/receive";
+  const title = isSending ? "Send Files" : "Enter Code";
+  const nextRoute = isSending ? "/send" : "/enter-code";
 
   const handleBack = () => {
     triggerHapticFeedback("light");

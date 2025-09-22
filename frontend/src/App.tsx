@@ -1,5 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { Route, BrowserRouter as Router, Routes } from "react-router";
+import EnterCodePage from "./pages/EnterCodePage";
 import HomePage from "./pages/HomePage";
 import InstructionsPage from "./pages/InstructionsPage";
 import ReceivePage from "./pages/ReceivePage";
@@ -18,6 +19,7 @@ function App() {
             <Route path="/instructions" element={<InstructionsPage />} />
             <Route path="/send" element={<SendPage />} />
             <Route path="/receive" element={<ReceivePage />} />
+            <Route path="/enter-code" element={<EnterCodePage />} />
           </Routes>
         </div>
       </Router>
