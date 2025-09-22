@@ -259,7 +259,7 @@ class SocketService {
         status: "transferring",
       });
 
-      if (this.receivedSize === this.fileMetadata.size) {
+      if (this.receivedSize >= this.fileMetadata.size) {
         // File transfer complete
         const file = new Blob(this.receivedBuffer);
         this.onFileReceiveCallback?.(file, this.fileMetadata);
