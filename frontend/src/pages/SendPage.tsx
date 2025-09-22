@@ -16,13 +16,14 @@ import {
   Music,
   Upload,
   Video,
-  X,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 interface FileWithProgress {
+  id: string;
+  originalIndex: number;
   file: File;
   progress: number;
   status: "waiting" | "transferring" | "completed" | "error";
@@ -45,6 +46,10 @@ export default function SendPage() {
   const [transferCompleted, setTransferCompleted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const socketServiceRef = useRef<SocketService | null>(null);
+
+  const currentBatchProgress = useRef<Map<number, FileWithProgress> | null>(
+    null,
+  );
 
   useEffect(() => {
     const socketService = new SocketService();
@@ -97,48 +102,65 @@ export default function SendPage() {
   };
 
   const updateFileProgress = (progress: FileTransferProgress) => {
+    const fileInMap = currentBatchProgress.current?.get(progress.fileIndex);
+    if (!fileInMap) {
+      return;
+    }
+
+    fileInMap.progress = progress.progress;
+    fileInMap.status = progress.status;
+    fileInMap.transferRate = progress.transferRate;
+    fileInMap.eta = progress.eta;
+
+    if (progress.status === "completed" && fileInMap.status !== "completed") {
+      triggerHapticFeedback("medium");
+    }
+
+    if (currentBatchProgress.current) {
+      const totalFiles = currentBatchProgress.current.size;
+      let sumOfAllProgress = 0;
+      let anyWaitingOrTransferring = false;
+      let allSuccessfullyCompleted = true;
+
+      currentBatchProgress.current.forEach((fwp) => {
+        sumOfAllProgress += fwp.progress;
+        if (fwp.status === "waiting" || fwp.status === "transferring") {
+          anyWaitingOrTransferring = true;
+        }
+        if (fwp.status !== "completed") {
+          allSuccessfullyCompleted = false;
+        }
+      });
+
+      setOverallProgress(totalFiles > 0 ? sumOfAllProgress / totalFiles : 0);
+      setIsSending(anyWaitingOrTransferring);
+
+      if (!anyWaitingOrTransferring && allSuccessfullyCompleted) {
+        setTimeout(() => {
+          setFiles([]);
+          setTransferCompleted(true);
+          currentBatchProgress.current = null;
+        }, 100);
+      }
+    } else {
+      setOverallProgress(0);
+      setIsSending(false);
+    }
+
     setFiles((prev) => {
-      const updated = prev.map((fileItem, index) => {
-        if (index === progress.fileIndex) {
-          const updatedFile = {
+      const updatedFiles = prev.map((fileItem) => {
+        if (fileItem.originalIndex === progress.fileIndex) {
+          return {
             ...fileItem,
             progress: progress.progress,
             status: progress.status,
             transferRate: progress.transferRate,
             eta: progress.eta,
           };
-
-          if (
-            progress.status === "completed" &&
-            fileItem.status !== "completed"
-          ) {
-            triggerHapticFeedback("medium");
-          }
-
-          return updatedFile;
         }
         return fileItem;
       });
-
-      const totalProgress = updated.reduce(
-        (sum, file) => sum + file.progress,
-        0,
-      );
-      setOverallProgress(
-        updated.length > 0 ? totalProgress / updated.length : 0,
-      );
-
-      const allCompleted =
-        updated.length > 0 && updated.every((f) => f.status === "completed");
-
-      if (allCompleted) {
-        setTimeout(() => {
-          setFiles([]);
-          setTransferCompleted(true);
-        }, 0);
-      }
-
-      return updated;
+      return updatedFiles.filter((f) => f.status !== "completed");
     });
   };
 
@@ -161,25 +183,45 @@ export default function SendPage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
     triggerHapticFeedback("light");
+    const selectedFiles = Array.from(e.target.files || []);
     addFiles(selectedFiles);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const addFiles = (newFiles: File[]) => {
+    setFiles([]);
     setTransferCompleted(false);
     setOverallProgress(0);
-    const filesWithProgress: FileWithProgress[] = newFiles.map((file) => ({
-      file,
-      progress: 0,
-      status: "waiting" as const,
-    }));
-    setFiles((prev) => [...prev, ...filesWithProgress]);
-  };
 
-  const removeFile = (index: number) => {
-    triggerHapticFeedback("light");
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    if (newFiles.length === 0) {
+      setIsSending(false);
+      return;
+    }
+
+    currentBatchProgress.current = new Map<number, FileWithProgress>();
+    const filesWithProgress: FileWithProgress[] = newFiles.map(
+      (file, index) => {
+        const fileItem: FileWithProgress = {
+          id: crypto.randomUUID(),
+          originalIndex: index,
+          file,
+          progress: 0,
+          status: "waiting" as const,
+        };
+        currentBatchProgress.current?.set(index, fileItem);
+        return fileItem;
+      },
+    );
+
+    setFiles(filesWithProgress);
+    setIsSending(true);
+
+    if (socketServiceRef.current) {
+      socketServiceRef.current.sendFiles(newFiles);
+    }
   };
 
   const getFileIcon = (file: File) => {
@@ -213,20 +255,6 @@ export default function SendPage() {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-  };
-
-  const handleSendFiles = async () => {
-    if (!socketServiceRef.current || files.length === 0) return;
-
-    triggerHapticFeedback("medium");
-    setIsSending(true);
-    try {
-      const filesToSend = files.map((f) => f.file);
-      await socketServiceRef.current.sendFiles(filesToSend);
-    } catch (error) {
-      console.error("Error sending files:", error);
-    }
-    setIsSending(false);
   };
 
   const handleBack = () => {
@@ -293,139 +321,125 @@ export default function SendPage() {
         </>
       ) : (
         <>
-          <div
-            className={`border-2 border-dashed rounded-lg p-6 md:p-8 text-center transition-colors cursor-pointer ${
-              isDragOver ? "border-primary bg-primary/5" : "border-border"
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={handleBrowseFiles}
-          >
-            <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
-            <div className="space-y-1 md:space-y-2">
-              <p className="text-sm md:text-lg font-medium">
-                Drop files here or <span className="text-blue-500">browse</span>
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                You can select multiple files. Files will be sent immediately
-                once you select them.
-              </p>
+          {!isSending && !transferCompleted && (
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 md:p-8 text-center transition-colors cursor-pointer ${
+                isDragOver ? "border-primary bg-primary/5" : "border-border"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleBrowseFiles}
+            >
+              <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
+              <div className="space-y-1 md:space-y-2">
+                <p className="text-sm md:text-lg font-medium">
+                  Drop files here or{" "}
+                  <span className="text-blue-600 dark:text-blue-400">
+                    browse
+                  </span>
+                </p>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  You can select multiple files. Files will be sent immediately
+                  once you select them.
+                </p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
-            />
-          </div>
+          )}
 
           {files.length > 0 && (
             <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">
-                    {files.length} file{files.length !== 1 ? "s" : ""} selected
+                    {files.length} file{files.length !== 1 ? "s" : ""}{" "}
+                    {isSending ? "remaining" : "with issues"}
                   </span>
-                  {overallProgress > 0 && (
+                  {isSending && overallProgress > 0 && (
                     <span className="text-sm text-muted-foreground">
                       ({Math.round(overallProgress)}%)
                     </span>
                   )}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={handleSendFiles}
-                  disabled={
-                    !connectionStatus.isConnected ||
-                    isSending ||
-                    files.length === 0
-                  }
-                >
-                  {isSending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4" />
-                      <span className="inline">Send Files</span>
-                    </>
-                  )}
-                </Button>
               </div>
-
-              {overallProgress > 0 && files.length > 0 && (
+              {isSending && (
                 <Progress value={overallProgress} className="w-full" />
               )}
-              {(files.length > 0 || transferCompleted) && (
-                <div className="mt-2">
-                  {files.length > 0 ? (
-                    <div className="space-y-2 md:space-y-3">
-                      {files.map((fileItem, index) => (
-                        <div
-                          key={index}
-                          className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
-                            fileItem.status === "completed"
-                              ? "opacity-0 transform -translate-y-2 scale-95"
-                              : "opacity-100 transform translate-y-0 scale-100"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                              {getFileIcon(fileItem.file)}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate text-sm md:text-base">
-                                  {fileItem.file.name}
-                                </p>
-                                <p className="text-xs md:text-sm text-muted-foreground">
-                                  {formatFileSize(fileItem.file.size)}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFile(index)}
-                              disabled={fileItem.status === "transferring"}
-                              className="h-8 w-8 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-
-                          {fileItem.progress > 0 && (
-                            <div className="space-y-1 md:space-y-2 mt-2">
-                              <Progress value={fileItem.progress} />
-                              <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>{Math.round(fileItem.progress)}%</span>
-                                <div className="flex gap-2 md:gap-4">
-                                  {fileItem.transferRate && (
-                                    <span>
-                                      Speed:{" "}
-                                      {formatSpeed(fileItem.transferRate)}
-                                    </span>
-                                  )}
-                                  {fileItem.eta !== undefined &&
-                                    fileItem.eta > 0 && (
-                                      <span>
-                                        ETA: {formatTime(fileItem.eta)}
-                                      </span>
-                                    )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
+              <div className="mt-2 space-y-2 md:space-y-3">
+                {files.map((fileItem) => (
+                  <div
+                    key={fileItem.id}
+                    className="border rounded-lg p-3 md:p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                        {getFileIcon(fileItem.file)}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate text-sm md:text-base">
+                            {fileItem.file.name}
+                          </p>
+                          <p className="text-xs md:text-sm text-muted-foreground">
+                            {formatFileSize(fileItem.file.size)}
+                            {fileItem.status === "error" && (
+                              <span className="ml-2 text-red-500">
+                                {" "}
+                                (Error)
+                              </span>
+                            )}
+                          </p>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-8 text-center">
-                      <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
-                      <p className="font-semibold">All files have been sent.</p>
-                    </div>
-                  )}
-                </div>
-              )}
+
+                    {(fileItem.progress > 0 || fileItem.status === "error") && (
+                      <div className="space-y-1 md:space-y-2 mt-2">
+                        {fileItem.status !== "error" && (
+                          <Progress value={fileItem.progress} />
+                        )}
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>
+                            {fileItem.status === "error"
+                              ? "Failed"
+                              : `${Math.round(fileItem.progress)}%`}
+                          </span>
+                          {!fileItem.status ||
+                          fileItem.status === "waiting" ||
+                          fileItem.status === "transferring" ? (
+                            <div className="flex gap-2 md:gap-4">
+                              {fileItem.transferRate && (
+                                <span>
+                                  Speed: {formatSpeed(fileItem.transferRate)}
+                                </span>
+                              )}
+                              {fileItem.eta !== undefined &&
+                                fileItem.eta > 0 && (
+                                  <span>ETA: {formatTime(fileItem.eta)}</span>
+                                )}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {transferCompleted && (
+            <div className="mt-4 flex flex-col items-center justify-center p-8 text-center">
+              <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
+              <p className="font-semibold mb-4">All files have been sent.</p>
+              <Button onClick={() => setTransferCompleted(false)}>
+                Send More
+              </Button>
             </div>
           )}
         </>
