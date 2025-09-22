@@ -223,155 +223,147 @@ export default function ReceivePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100svh] items-center justify-center">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground">Connecting to sender...</p>
-        </div>
+      <div className="text-center space-y-2">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        <p className="text-muted-foreground">Connecting to sender...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100svh] p-2 md:p-4">
-      <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">Receive Files</h1>
+    <div className="max-w-md mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="sm" onClick={handleBack}>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Back</span>
+        </Button>
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold">Receive Files</h1>
+        </div>
+      </div>
+
+      {!connectionStatus.isConnected && !clientIdFromUrl && (
+        <div className="rounded-lg border bg-background p-3 md:p-6">
+          <div className="p-0 pb-3 md:pb-4">
+            <h2 className="text-lg md:text-xl font-semibold mb-2">
+              Enter Code or Scan QR Code
+            </h2>
+          </div>
+          <div className="p-0 space-y-3 md:space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm md:text-base text-muted-foreground">
+                Scan the QR code with your camera app or enter the code from the
+                sending device:
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter code here..."
+                  value={clientIdInput}
+                  onChange={(e) => setClientIdInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleConnect()}
+                  className="font-mono text-sm"
+                />
+                <Button
+                  onClick={handleConnect}
+                  disabled={isConnecting || !clientIdInput.trim()}
+                  size="sm"
+                >
+                  {isConnecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Connect"
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-sm">{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </div>
+      )}
 
-        {!connectionStatus.isConnected && !clientIdFromUrl && (
-          <div className="rounded-lg border bg-background p-3 md:p-6">
-            <div className="p-0 pb-3 md:pb-4">
-              <h2 className="text-lg md:text-xl font-semibold mb-2">
-                Enter Code or Scan QR Code
-              </h2>
-            </div>
-            <div className="p-0 space-y-3 md:space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Scan the QR code with your camera app or enter the code from
-                  the sending device:
-                </p>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter code here..."
-                    value={clientIdInput}
-                    onChange={(e) => setClientIdInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleConnect()}
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    onClick={handleConnect}
-                    disabled={isConnecting || !clientIdInput.trim()}
-                    size="sm"
-                  >
-                    {isConnecting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Connect"
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription className="text-sm">
-                    {error}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+      {receivedFiles.length > 0 && (
+        <div className="rounded-lg border bg-background p-3 md:p-6">
+          <div className="p-0 pb-3 md:pb-4">
+            <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
+              <Download className="h-4 w-4 md:h-5 md:w-5" />
+              Received Files
+              <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
+                {receivedFiles.length}
+              </span>
+            </h2>
           </div>
-        )}
-
-        {receivedFiles.length > 0 && (
-          <div className="rounded-lg border bg-background p-3 md:p-6">
-            <div className="p-0 pb-3 md:pb-4">
-              <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-                <Download className="h-4 w-4 md:h-5 md:w-5" />
-                Received Files
-                <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
-                  {receivedFiles.length}
-                </span>
-              </h2>
-            </div>
-            <div className="p-0">
-              <div className="space-y-2 md:space-y-3">
-                {receivedFiles.map((file, index) => (
-                  <div key={index} className="border rounded-lg p-3 md:p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                        {getFileIcon(file.metadata.name)}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate text-sm md:text-base">
-                            {file.metadata.name}
-                          </p>
-                          <p className="text-xs md:text-sm text-muted-foreground">
-                            {file.metadata.size > 0
-                              ? formatFileSize(file.metadata.size)
-                              : "Size unknown"}
-                          </p>
-                        </div>
+          <div className="p-0">
+            <div className="space-y-2 md:space-y-3">
+              {receivedFiles.map((file, index) => (
+                <div key={index} className="border rounded-lg p-3 md:p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                      {getFileIcon(file.metadata.name)}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate text-sm md:text-base">
+                          {file.metadata.name}
+                        </p>
+                        <p className="text-xs md:text-sm text-muted-foreground">
+                          {file.metadata.size > 0
+                            ? formatFileSize(file.metadata.size)
+                            : "Size unknown"}
+                        </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(file)}
-                        className="h-8"
-                        disabled={file.status !== "completed"}
-                      >
-                        <Download className="h-4 w-4" />
-                        <span className="hidden sm:inline">Download</span>
-                      </Button>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(file)}
+                      className="h-8"
+                      disabled={file.status !== "completed"}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Download</span>
+                    </Button>
+                  </div>
 
-                    {file.status === "receiving" && file.progress > 0 && (
-                      <div className="space-y-1 md:space-y-2 mt-2">
-                        <Progress value={file.progress} />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{Math.round(file.progress)}%</span>
-                          <div className="flex gap-2 md:gap-4">
-                            {file.transferRate && (
-                              <span>
-                                Speed: {formatSpeed(file.transferRate)}
-                              </span>
-                            )}
-                            {file.eta !== undefined && file.eta > 0 && (
-                              <span>ETA: {formatTime(file.eta)}</span>
-                            )}
-                          </div>
+                  {file.status === "receiving" && file.progress > 0 && (
+                    <div className="space-y-1 md:space-y-2 mt-2">
+                      <Progress value={file.progress} />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{Math.round(file.progress)}%</span>
+                        <div className="flex gap-2 md:gap-4">
+                          {file.transferRate && (
+                            <span>Speed: {formatSpeed(file.transferRate)}</span>
+                          )}
+                          {file.eta !== undefined && file.eta > 0 && (
+                            <span>ETA: {formatTime(file.eta)}</span>
+                          )}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {connectionStatus.isConnected && receivedFiles.length === 0 && (
-          <div className="rounded-lg border bg-background p-4 md:p-6">
-            <div className="flex flex-col items-center justify-center py-6 md:py-8">
-              <CheckCircle2 className="h-12 w-12 md:h-16 md:w-16 text-green-500 mb-3" />
-              <h2 className="text-lg md:text-xl font-semibold mb-2">
-                Ready to receive files!
-              </h2>
-              <p className="text-sm md:text-base text-muted-foreground text-center">
-                Start sending files from your other device and they'll appear
-                here for download
-              </p>
-            </div>
+      {connectionStatus.isConnected && receivedFiles.length === 0 && (
+        <div className="rounded-lg border bg-background p-4 md:p-6">
+          <div className="flex flex-col items-center justify-center py-6 md:py-8">
+            <CheckCircle2 className="h-12 w-12 md:h-16 md:w-16 text-green-500 mb-3" />
+            <h2 className="text-lg md:text-xl font-semibold mb-2">
+              Ready to receive files!
+            </h2>
+            <p className="text-sm md:text-base text-muted-foreground text-center">
+              Start sending files from your other device and they'll appear here
+              for download
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
