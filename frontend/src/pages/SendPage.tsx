@@ -322,7 +322,7 @@ export default function SendPage() {
               <div className="mb-4">
                 <h2 className="flex items-center gap-2 text-lg md:text-xl font-semibold">
                   <Upload className="h-5 w-5 md:h-6 md:w-6" />
-                  Select Files to Send
+                  Send Files
                   {files.length > 0 && (
                     <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
                       {files.length}
@@ -396,81 +396,82 @@ export default function SendPage() {
                   {overallProgress > 0 && files.length > 0 && (
                     <Progress value={overallProgress} className="w-full" />
                   )}
+                  {(files.length > 0 || transferCompleted) && (
+                    <div className="mt-2">
+                      {files.length > 0 ? (
+                        <div className="space-y-2 md:space-y-3">
+                          {files.map((fileItem, index) => (
+                            <div
+                              key={index}
+                              className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
+                                fileItem.status === "completed"
+                                  ? "opacity-0 transform -translate-y-2 scale-95"
+                                  : "opacity-100 transform translate-y-0 scale-100"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+                                  {getFileIcon(fileItem.file)}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate text-sm md:text-base">
+                                      {fileItem.file.name}
+                                    </p>
+                                    <p className="text-xs md:text-sm text-muted-foreground">
+                                      {formatFileSize(fileItem.file.size)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeFile(index)}
+                                  disabled={fileItem.status === "transferring"}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              {fileItem.progress > 0 && (
+                                <div className="space-y-1 md:space-y-2 mt-2">
+                                  <Progress value={fileItem.progress} />
+                                  <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>
+                                      {Math.round(fileItem.progress)}%
+                                    </span>
+                                    <div className="flex gap-2 md:gap-4">
+                                      {fileItem.transferRate && (
+                                        <span>
+                                          Speed:{" "}
+                                          {formatSpeed(fileItem.transferRate)}
+                                        </span>
+                                      )}
+                                      {fileItem.eta !== undefined &&
+                                        fileItem.eta > 0 && (
+                                          <span>
+                                            ETA: {formatTime(fileItem.eta)}
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center p-8 text-center">
+                          <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
+                          <p className="font-semibold">
+                            All files have been sent.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-
-            {(files.length > 0 || transferCompleted) && (
-              <div className="rounded-lg border bg-background p-4 md:p-6">
-                <div className="mb-4">
-                  <h2 className="text-lg md:text-xl font-semibold">
-                    File Transfer
-                  </h2>
-                </div>
-                {files.length > 0 ? (
-                  <div className="space-y-2 md:space-y-3">
-                    {files.map((fileItem, index) => (
-                      <div
-                        key={index}
-                        className={`border rounded-lg p-3 md:p-4 transition-all duration-500 ease-out ${
-                          fileItem.status === "completed"
-                            ? "opacity-0 transform -translate-y-2 scale-95"
-                            : "opacity-100 transform translate-y-0 scale-100"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
-                            {getFileIcon(fileItem.file)}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate text-sm md:text-base">
-                                {fileItem.file.name}
-                              </p>
-                              <p className="text-xs md:text-sm text-muted-foreground">
-                                {formatFileSize(fileItem.file.size)}
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                            disabled={fileItem.status === "transferring"}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        {fileItem.progress > 0 && (
-                          <div className="space-y-1 md:space-y-2 mt-2">
-                            <Progress value={fileItem.progress} />
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>{Math.round(fileItem.progress)}%</span>
-                              <div className="flex gap-2 md:gap-4">
-                                {fileItem.transferRate && (
-                                  <span>
-                                    Speed: {formatSpeed(fileItem.transferRate)}
-                                  </span>
-                                )}
-                                {fileItem.eta !== undefined &&
-                                  fileItem.eta > 0 && (
-                                    <span>ETA: {formatTime(fileItem.eta)}</span>
-                                  )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <CheckCircle2 className="h-12 w-12 text-green-500 mb-3" />
-                    <p className="font-semibold">All files have been sent.</p>
-                  </div>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>
