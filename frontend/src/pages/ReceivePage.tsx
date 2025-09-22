@@ -240,15 +240,6 @@ export default function ReceivePage() {
 
       {receivedFiles.length > 0 && (
         <div className="w-full rounded-lg border bg-background p-3 md:p-6">
-          <div className="p-0 pb-3 md:pb-4">
-            <h2 className="flex items-center gap-2 text-base md:text-lg font-semibold">
-              <Download className="h-4 w-4 md:h-5 md:w-5" />
-              Received Files
-              <span className="bg-secondary text-secondary-foreground text-xs px-2 py-1 rounded-full">
-                {receivedFiles.length}
-              </span>
-            </h2>
-          </div>
           <div className="p-0">
             <div className="space-y-2 md:space-y-3">
               {receivedFiles.map((file, index) => (
