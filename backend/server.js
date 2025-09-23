@@ -23,6 +23,10 @@ io.on("connection", (socket) => {
   clients[clientId] = socket.id;
   socket.emit("clientId", clientId);
 
+  socket.on("ping", () => {
+    socket.emit("pong");
+  });
+
   socket.on("connect to", (targetId) => {
     const targetSocketId = clients[targetId];
     if (targetSocketId) {

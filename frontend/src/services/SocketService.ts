@@ -29,6 +29,10 @@ class SocketService {
   private isInitiator: boolean = false;
   private clientId: string | null = null;
 
+  // Ping/Pong intervals
+  private serverPingInterval: ReturnType<typeof setInterval> | null = null;
+  private peerPingInterval: ReturnType<typeof setInterval> | null = null;
+
   // Callbacks
   private onClientIdCallback?: (clientId: string) => void;
   private onConnectionStatusCallback?: (status: ConnectionStatus) => void;
@@ -57,9 +61,17 @@ class SocketService {
 
     this.socket = io(baseUrl);
 
+    this.socket.on("connect", () => {
+      this.startServerPing();
+    });
+
     this.socket.on("clientId", (id: string) => {
       this.clientId = id;
       this.onClientIdCallback?.(id);
+    });
+
+    this.socket.on("pong", () => {
+      // Pong from server received
     });
 
     this.socket.on("join", (roomName: string, isInitiatorFlag: boolean) => {
@@ -101,11 +113,44 @@ class SocketService {
     });
 
     this.socket.on("disconnect", () => {
+      this.stopServerPing();
       this.onConnectionStatusCallback?.({
         isConnected: false,
         clientId: this.clientId!,
       });
     });
+  }
+
+  private startServerPing() {
+    this.stopServerPing();
+    this.serverPingInterval = setInterval(() => {
+      if (this.socket && this.socket.connected) {
+        this.socket.emit("ping");
+      }
+    }, 10000);
+  }
+
+  private stopServerPing() {
+    if (this.serverPingInterval) {
+      clearInterval(this.serverPingInterval);
+      this.serverPingInterval = null;
+    }
+  }
+
+  private startPeerPing() {
+    this.stopPeerPing();
+    this.peerPingInterval = setInterval(() => {
+      if (this.dataChannel && this.dataChannel.readyState === "open") {
+        this.dataChannel.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 10000);
+  }
+
+  private stopPeerPing() {
+    if (this.peerPingInterval) {
+      clearInterval(this.peerPingInterval);
+      this.peerPingInterval = null;
+    }
   }
 
   private createPeerConnection() {
@@ -159,6 +204,7 @@ class SocketService {
         isInitiator: this.isInitiator,
         room: this.room!,
       });
+      this.startPeerPing();
     };
 
     this.dataChannel.onclose = () => {
@@ -167,6 +213,7 @@ class SocketService {
         isConnected: false,
         clientId: this.clientId!,
       });
+      this.stopPeerPing();
     };
 
     this.dataChannel.onmessage = (event) => {
@@ -225,26 +272,44 @@ class SocketService {
 
   private handleDataChannelMessage(event: MessageEvent) {
     if (typeof event.data === "string") {
-      // File metadata
-      this.fileMetadata = JSON.parse(event.data);
-      this.receivedSize = 0;
-      this.receivedBuffer = [];
-      this.transferStartTime = Date.now();
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "ping") {
+          console.log("Ping received from peer");
+          if (this.dataChannel && this.dataChannel.readyState === "open") {
+            this.dataChannel.send(JSON.stringify({ type: "pong" }));
+          }
+          return;
+        }
+        if (message.type === "pong") {
+          // Pong received from peer. Can be used for latency/liveness check.
+          return;
+        }
 
-      // Notify about metadata
-      if (this.fileMetadata) {
-        this.onMetadataReceiveCallback?.(this.fileMetadata);
+        // File metadata
+        this.fileMetadata = message;
+        this.receivedSize = 0;
+        this.receivedBuffer = [];
+        this.transferStartTime = Date.now();
+
+        // Notify about metadata
+        if (this.fileMetadata) {
+          this.onMetadataReceiveCallback?.(this.fileMetadata);
+        }
+
+        this.onTransferProgressCallback?.({
+          fileIndex: 0,
+          fileName: this.fileMetadata?.name || "Unknown",
+          progress: 0,
+          transferRate: 0,
+          eta: 0,
+          status: "transferring",
+        });
+        return;
+      } catch (e) {
+        console.error("Error parsing string message from data channel:", e);
+        return;
       }
-
-      this.onTransferProgressCallback?.({
-        fileIndex: 0,
-        fileName: this.fileMetadata?.name || "Unknown",
-        progress: 0,
-        transferRate: 0,
-        eta: 0,
-        status: "transferring",
-      });
-      return;
     }
 
     // File data chunk
@@ -348,6 +413,7 @@ class SocketService {
 
         if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 8) {
           this.dataChannel!.onbufferedamountlow = () => {
+            this.dataChannel!.onbufferedamountlow = null; // one-time listener
             sendNextChunk();
           };
           return;
@@ -377,7 +443,8 @@ class SocketService {
                 status: "transferring",
               });
 
-              sendNextChunk();
+              // Use setTimeout to avoid blocking the event loop on very fast connections
+              setTimeout(sendNextChunk, 0);
             } catch (error) {
               console.error("Error sending chunk:", error);
               reject(error);
@@ -424,6 +491,8 @@ class SocketService {
 
   // Cleanup
   disconnect() {
+    this.stopServerPing();
+    this.stopPeerPing();
     this.dataChannel?.close();
     this.peerConnection?.close();
     this.socket?.disconnect();
