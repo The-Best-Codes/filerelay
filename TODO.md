@@ -1,0 +1,1 @@
+- Firefox compatibility (lots of misc issues, like sharing file between two firefox instances doesn't allow downloading it, connecting from firefox to chrome doesn't work, etc.)
