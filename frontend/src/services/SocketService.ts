@@ -43,7 +43,7 @@ class SocketService {
   private fileMetadata: FileMetadata | null = null;
   private transferStartTime: number = 0;
 
-  private readonly CHUNK_SIZE = 128 * 1024; // 128KB
+  private readonly CHUNK_SIZE = 32 * 1024; // 32KB
 
   constructor() {
     this.connect();
