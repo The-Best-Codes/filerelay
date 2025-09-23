@@ -71,8 +71,8 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-[100svh] bg-background text-foreground flex items-center justify-center p-4 pt-16 relative">
-        <header className="absolute top-0 left-0 w-full bg-accent flex items-center justify-start p-4 h-16">
+      <div className="min-h-[100svh] bg-background text-foreground flex flex-col relative">
+        <header className="absolute top-0 left-0 w-full bg-accent flex items-center justify-start p-4 h-16 z-10">
           <h1 className="text-2xl font-bold">
             <Link to="/">BCShare</Link>
           </h1>

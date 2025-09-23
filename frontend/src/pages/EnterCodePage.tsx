@@ -47,53 +47,55 @@ export default function EnterCodePage() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
-      <div className="rounded-lg border bg-background shadow-sm p-6">
-        <div className="text-center p-0 pb-4">
-          <h2 className="flex items-center justify-center gap-2 text-lg font-semibold">
-            <TextCursorInput className="size-6" />
-            Manual Connection
-          </h2>
-        </div>
-        <div className="space-y-6 p-0">
-          <div className="space-y-2">
-            <span className="text-sm block">
-              If you can't scan the QR code shown on the sending device, you can
-              enter the code manually below.
-            </span>
-            <Input
-              type="text"
-              value={clientId}
-              onChange={(e) => {
-                setClientId(e.target.value);
-                if (error) setError("");
-              }}
-              placeholder="Enter code"
-              className="w-full font-mono"
-              maxLength={6}
-            />
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <div className="flex-1 flex justify-center items-center p-4 pt-20 overflow-auto">
+      <div className="w-full max-w-md space-y-6">
+        <div className="rounded-lg border bg-background shadow-sm p-6">
+          <div className="text-center p-0 pb-4">
+            <h2 className="flex items-center justify-center gap-2 text-lg font-semibold">
+              <TextCursorInput className="size-6" />
+              Manual Connection
+            </h2>
           </div>
+          <div className="space-y-6 p-0">
+            <div className="space-y-2">
+              <span className="text-sm block">
+                If you can't scan the QR code shown on the sending device, you
+                can enter the code manually below.
+              </span>
+              <Input
+                type="text"
+                value={clientId}
+                onChange={(e) => {
+                  setClientId(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Enter code"
+                className="w-full font-mono"
+                maxLength={6}
+              />
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              className="flex-1"
-              size="sm"
-            >
-              Back
-            </Button>
-            <Button onClick={handleContinue} className="flex-1" size="sm">
-              Continue
-              <ArrowRight className="size-4" />
-            </Button>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="flex-1"
+                size="sm"
+              >
+                Back
+              </Button>
+              <Button onClick={handleContinue} className="flex-1" size="sm">
+                Continue
+                <ArrowRight className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
