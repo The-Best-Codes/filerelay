@@ -11,11 +11,13 @@ import { checkWebRTCSupport } from "./utils/webrtcUtils";
 
 function App() {
   const [webrtcSupported, setWebrtcSupported] = useState<boolean | null>(null);
+  const [webrtcDetails, setWebrtcDetails] = useState<string[]>([]);
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
-    const { supported } = checkWebRTCSupport();
+    const { supported, details } = checkWebRTCSupport();
     setWebrtcSupported(supported);
+    setWebrtcDetails(details);
     if (!supported) {
       setShowWarning(true);
     }
@@ -51,6 +53,15 @@ function App() {
               It looks like your browser doesn't fully support WebRTC, which is
               required for file sharing. The application may not work properly.
             </p>
+            <p className="text-muted-foreground text-left text-sm">
+              These are the indications we detected that your browser may not
+              support WebRTC:
+            </p>
+            <ul className="text-left text-muted-foreground text-sm list-disc list-inside">
+              {webrtcDetails.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
           </div>
           <div className="flex flex-col md:flex-row gap-3">
             <Button
