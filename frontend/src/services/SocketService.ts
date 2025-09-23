@@ -346,7 +346,7 @@ class SocketService {
           return;
         }
 
-        if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 4) {
+        if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 8) {
           this.dataChannel!.onbufferedamountlow = () => {
             sendNextChunk();
           };
@@ -392,7 +392,7 @@ class SocketService {
         reader.readAsArrayBuffer(slice);
       };
 
-      this.dataChannel.bufferedAmountLowThreshold = this.CHUNK_SIZE * 2;
+      this.dataChannel.bufferedAmountLowThreshold = this.CHUNK_SIZE * 4;
       sendNextChunk();
     });
   }
