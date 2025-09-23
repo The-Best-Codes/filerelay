@@ -1,24 +1,49 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import { ArrowRight, TextCursorInput } from "lucide-react";
+import { AlertCircle, ArrowRight, TextCursorInput } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-
-// TODO: Validate client ID format
 
 export default function EnterCodePage() {
   const navigate = useNavigate();
   const [clientId, setClientId] = useState("");
+  const [error, setError] = useState("");
 
   const handleBack = () => {
     triggerHapticFeedback("light");
     navigate("/");
   };
 
+  const validateClientId = (id: string): string => {
+    const trimmedId = id.trim();
+
+    if (!trimmedId) {
+      return "Please enter a connection code";
+    }
+
+    if (trimmedId.length !== 6) {
+      return "Connection code must be exactly 6 characters long";
+    }
+
+    // if (!/^[a-zA-Z0-9]{6}$/.test(trimmedId)) {
+    //   return "Connection code must contain only letters and numbers";
+    // }
+
+    return "";
+  };
+
   const handleContinue = () => {
+    const validationError = validateClientId(clientId);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setError("");
     triggerHapticFeedback("medium");
-    navigate(`/receive?client-id=${clientId}`);
+    navigate(`/receive?client-id=${clientId.trim()}`);
   };
 
   return (
@@ -39,10 +64,21 @@ export default function EnterCodePage() {
             <Input
               type="text"
               value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
+              onChange={(e) => {
+                setClientId(e.target.value);
+                if (error) setError("");
+              }}
               placeholder="Enter code"
               className="w-full font-mono"
+              maxLength={6}
             />
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </div>
 
           <div className="flex gap-3">
