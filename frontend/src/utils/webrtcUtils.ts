@@ -28,10 +28,5 @@ export const checkWebRTCSupport = (): {
     supported = false;
   }
 
-  if (typeof navigator === "undefined" || !navigator.mediaDevices) {
-    details.push("Media devices API not available");
-    supported = false;
-  }
-
   return { supported, details };
 };
