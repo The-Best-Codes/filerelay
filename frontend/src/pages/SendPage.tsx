@@ -4,19 +4,10 @@ import SocketService, {
   type ConnectionStatus,
   type FileTransferProgress,
 } from "@/services/SocketService";
+import { getFileIcon } from "@/utils/fileIconUtils";
+import { formatFileSize, formatSpeed, formatTime } from "@/utils/fileUtils";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import {
-  Archive,
-  ArrowLeft,
-  CheckCircle2,
-  File,
-  FileText,
-  Image,
-  Loader2,
-  Music,
-  Upload,
-  Video,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Upload } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -222,39 +213,6 @@ export default function SendPage() {
     if (socketServiceRef.current) {
       socketServiceRef.current.sendFiles(newFiles);
     }
-  };
-
-  const getFileIcon = (file: File) => {
-    const type = file.type.toLowerCase();
-    const className = "h-5 w-5";
-
-    if (type.startsWith("image/")) return <Image className={className} />;
-    if (type.startsWith("video/")) return <Video className={className} />;
-    if (type.startsWith("audio/")) return <Music className={className} />;
-    if (type.includes("zip") || type.includes("rar") || type.includes("tar"))
-      return <Archive className={className} />;
-    if (type.includes("text") || type.includes("document"))
-      return <FileText className={className} />;
-    return <File className={className} />;
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const formatSpeed = (bytesPerSecond: number) => {
-    return formatFileSize(bytesPerSecond) + "/s";
-  };
-
-  const formatTime = (seconds: number) => {
-    if (!isFinite(seconds) || seconds < 0) return "—";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
   const handleBack = () => {

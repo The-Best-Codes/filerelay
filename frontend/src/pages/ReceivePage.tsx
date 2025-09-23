@@ -5,19 +5,10 @@ import SocketService, {
   type ConnectionStatus,
   type FileMetadata,
 } from "@/services/SocketService";
+import { getFileIcon } from "@/utils/fileIconUtils";
+import { formatFileSize, formatSpeed, formatTime } from "@/utils/fileUtils";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import {
-  Archive,
-  ArrowLeft,
-  CheckCircle2,
-  Download,
-  File,
-  FileText,
-  Image,
-  Loader2,
-  Music,
-  Video,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -173,42 +164,6 @@ export default function ReceivePage() {
   const handleBack = () => {
     triggerHapticFeedback("light");
     navigate("/");
-  };
-
-  const getFileIcon = (fileName: string) => {
-    const ext = fileName.toLowerCase().split(".").pop() || "";
-    const className = "h-5 w-5";
-
-    if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext))
-      return <Image className={className} />;
-    if (["mp4", "avi", "mov", "mkv", "webm"].includes(ext))
-      return <Video className={className} />;
-    if (["mp3", "wav", "flac", "aac", "ogg"].includes(ext))
-      return <Music className={className} />;
-    if (["zip", "rar", "tar", "7z", "gz"].includes(ext))
-      return <Archive className={className} />;
-    if (["txt", "doc", "docx", "pdf", "rtf"].includes(ext))
-      return <FileText className={className} />;
-    return <File className={className} />;
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const formatSpeed = (bytesPerSecond: number) => {
-    return formatFileSize(bytesPerSecond) + "/s";
-  };
-
-  const formatTime = (seconds: number) => {
-    if (!isFinite(seconds) || seconds < 0) return "—";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
   if (isLoading) {
