@@ -374,7 +374,7 @@ export default function SendPage() {
                             {!fileItem.status ||
                             fileItem.status === "waiting" ||
                             fileItem.status === "transferring" ? (
-                              <div className="flex gap-3">
+                              <div className="flex gap-3 tabular-nums">
                                 {fileItem.transferRate && (
                                   <span>
                                     Speed: {formatSpeed(fileItem.transferRate)}

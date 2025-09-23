@@ -230,7 +230,7 @@ export default function ReceivePage() {
                     <Progress value={file.progress} />
                     <div className="flex justify-between text-xs text-muted-foreground">
                       <span>{Math.round(file.progress)}%</span>
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 tabular-nums">
                         {file.transferRate && (
                           <span>Speed: {formatSpeed(file.transferRate)}</span>
                         )}
