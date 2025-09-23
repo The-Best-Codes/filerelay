@@ -3,7 +3,12 @@ import { Archive, File, FileText, Image, Music, Video } from "lucide-react";
 export const getFileIcon = (file: File | string) => {
   const className = "h-5 w-5";
 
-  if (typeof file === "object" && file !== null && "type" in file && "name" in file) {
+  if (
+    typeof file === "object" &&
+    file !== null &&
+    "type" in file &&
+    "name" in file
+  ) {
     const type = file.type.toLowerCase();
 
     if (type.startsWith("image/")) return <Image className={className} />;
