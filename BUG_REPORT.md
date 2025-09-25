@@ -307,33 +307,6 @@ Ping received from peer
 - Sender: Progress to 100%, status "completed".
 - Receiver: Metadata received, progress to 0 then NaN, no "File received".
 
-## Analysis and Guesses
-
-### Root Cause Guess
-
-The issue is likely in the `SocketService.ts` file, specifically in the `handleDataChannelMessage` method (lines 295-380). In Firefox, the data channel may not be handling ArrayBuffer chunks correctly, leading to `receivedSize` becoming NaN.
-
-- **Progress Calculation**: `const progress = Math.min(100, (this.receivedSize / this.fileMetadata.size) * 100);`
-  - If `this.receivedSize` is NaN (e.g., from `+= event.data.byteLength` where `event.data` is not an ArrayBuffer), progress becomes NaN.
-  - In Firefox, `event.data` might be a string or different type instead of ArrayBuffer, causing `byteLength` to be undefined, and `undefined + number = NaN`.
-
-- **No Completion**: The condition `if (this.receivedSize >= this.fileMetadata.size)` never triggers because `receivedSize` is NaN, so no "File received" callback.
-
-- **Firefox-Specific**: Firefox has known issues with WebRTC data channels, especially with message types or buffering for small files.
-
-### Potential Fixes (Not Implemented Yet)
-
-- Add type checks for `event.data` in `handleDataChannelMessage`.
-- Ensure `event.data` is an ArrayBuffer before accessing `byteLength`.
-- Handle cases where data is sent as a single message in Firefox.
-- Test with larger files to confirm.
-
-### Files Involved
-
-- `frontend/src/services/SocketService.ts`: Core transfer logic.
-- `frontend/src/pages/ReceivePage.tsx`: UI for receiving files.
-- `frontend/src/pages/SendPage.tsx`: UI for sending files.
-
 ## Additional Notes
 
 - CORS errors are from ad blockers and can be ignored.
