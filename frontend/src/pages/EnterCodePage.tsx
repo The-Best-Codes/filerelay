@@ -78,6 +78,11 @@ export default function EnterCodePage() {
                   setClientId(e.target.value);
                   if (error) setError("");
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleContinue();
+                  }
+                }}
                 placeholder="Enter code"
                 className="w-full font-mono"
                 maxLength={6}
