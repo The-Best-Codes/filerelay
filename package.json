@@ -1,6 +1,6 @@
 {
   "name": "bc-share-p2p",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "install": "cd frontend && bun install --frozen-lockfile && cd .. && cd backend && bun install --frozen-lockfile && cd ..",
     "build": "cd frontend && bun run build && cd .. ",
