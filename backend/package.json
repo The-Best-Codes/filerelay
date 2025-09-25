@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "filerelay-backend",
   "version": "1.0.1",
   "main": "server.js",
   "scripts": {
