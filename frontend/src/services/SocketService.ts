@@ -335,9 +335,36 @@ class SocketService {
     }
 
     // File data chunk
-    this.receivedBuffer.push(event.data);
-    this.receivedSize += event.data.byteLength;
+    if (event.data instanceof ArrayBuffer) {
+      this.receivedBuffer.push(event.data);
+      this.receivedSize += event.data.byteLength;
+    } else {
+      // Received data is not an ArrayBuffer, which is unexpected.
+      // Try to handle it as a Blob.
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const buffer = e.target?.result;
+        if (buffer instanceof ArrayBuffer) {
+          this.receivedBuffer.push(buffer);
+          this.receivedSize += buffer.byteLength;
+          this.updateProgress();
+        } else {
+          console.error(
+            "Received data chunk is not a Blob or ArrayBuffer and could not be processed.",
+          );
+        }
+      };
+      reader.onerror = () => {
+        console.error("Error reading received Blob data.");
+      };
+      reader.readAsArrayBuffer(event.data);
+      return; // Progress will be updated in the onload callback
+    }
 
+    this.updateProgress();
+  }
+
+  private updateProgress() {
     if (this.fileMetadata) {
       // Cap progress at 100% for display
       const progress = Math.min(
@@ -481,8 +508,8 @@ class SocketService {
                 status: "transferring",
               });
 
-              // Use setTimeout to avoid blocking the event loop on very fast connections
-              setTimeout(sendNextChunk, 0);
+              // Use requestAnimationFrame to avoid blocking the event loop on very fast connections
+              requestAnimationFrame(sendNextChunk);
             } catch (error) {
               console.error("Error sending chunk:", error);
               reject(error);
