@@ -50,10 +50,14 @@ class SocketService {
   private readonly CHUNK_SIZE = 32 * 1024; // 32KB
 
   constructor() {
+    if (window.devVerboseLogging)
+      console.log("SocketService: Initializing SocketService");
     this.connect();
   }
 
   private connect() {
+    if (window.devVerboseLogging)
+      console.log("SocketService: Connecting to socket server");
     // Use current host or fallback to localhost
     const baseUrl =
       import.meta.env.VITE_BASE_URL ||
@@ -62,19 +66,32 @@ class SocketService {
     this.socket = io(baseUrl);
 
     this.socket.on("connect", () => {
+      if (window.devVerboseLogging)
+        console.log("SocketService: Connected to socket server");
       this.startServerPing();
     });
 
     this.socket.on("clientId", (id: string) => {
+      if (window.devVerboseLogging)
+        console.log("SocketService: Received client ID:", id);
       this.clientId = id;
       this.onClientIdCallback?.(id);
     });
 
     this.socket.on("pong", () => {
+      if (window.devVerboseLogging)
+        console.log("SocketService: Received pong from server");
       // Pong from server received
     });
 
     this.socket.on("join", (roomName: string, isInitiatorFlag: boolean) => {
+      if (window.devVerboseLogging)
+        console.log(
+          "SocketService: Joining room:",
+          roomName,
+          "as initiator:",
+          isInitiatorFlag,
+        );
       this.room = roomName;
       this.isInitiator = isInitiatorFlag;
       this.socket?.emit("join", roomName);
@@ -105,14 +122,19 @@ class SocketService {
     });
 
     this.socket.on("ready", () => {
+      if (window.devVerboseLogging) console.log("SocketService: Socket ready");
       console.log("Socket ready");
     });
 
     this.socket.on("message", (message: unknown) => {
+      if (window.devVerboseLogging)
+        console.log("SocketService: Received signaling message:", message);
       this.handleSignalingMessage(message);
     });
 
     this.socket.on("disconnect", () => {
+      if (window.devVerboseLogging)
+        console.log("SocketService: Disconnected from socket server");
       this.stopServerPing();
       this.onConnectionStatusCallback?.({
         isConnected: false,
@@ -363,11 +385,18 @@ class SocketService {
 
   // Public methods
   connectToClient(targetClientId: string) {
+    if (window.devVerboseLogging)
+      console.log("SocketService: Connecting to client:", targetClientId);
     if (!this.socket) return;
     this.socket.emit("connect to", targetClientId);
   }
 
   async sendFiles(files: File[]) {
+    if (window.devVerboseLogging)
+      console.log(
+        "SocketService: Sending files:",
+        files.map((f) => f.name),
+      );
     if (!this.dataChannel || this.dataChannel.readyState !== "open") {
       this.onErrorCallback?.("No connection available for file transfer");
       return;
@@ -381,6 +410,13 @@ class SocketService {
   }
 
   private async sendSingleFile(file: File, fileIndex: number): Promise<void> {
+    if (window.devVerboseLogging)
+      console.log(
+        "SocketService: Sending single file:",
+        file.name,
+        "size:",
+        file.size,
+      );
     return new Promise((resolve, reject) => {
       if (!this.dataChannel) {
         reject(new Error("No data channel available"));
@@ -392,6 +428,8 @@ class SocketService {
         name: file.name,
         size: file.size,
       };
+      if (window.devVerboseLogging)
+        console.log("SocketService: Sending file metadata:", metadata);
       this.dataChannel.send(JSON.stringify(metadata));
 
       let offset = 0;

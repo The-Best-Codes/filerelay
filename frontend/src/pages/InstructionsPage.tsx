@@ -7,17 +7,29 @@ export default function InstructionsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const action = searchParams.get("go");
+  if (window.devVerboseLogging)
+    console.log(
+      "InstructionsPage.tsx: InstructionsPage rendered with action:",
+      action,
+    );
 
   const isSending = action === "send";
   const title = isSending ? "Send Files" : "Enter Code";
   const nextRoute = isSending ? "/send" : "/enter-code";
 
   const handleBack = () => {
+    if (window.devVerboseLogging)
+      console.log("InstructionsPage.tsx: User clicked Back, navigating to /");
     triggerHapticFeedback("light");
     navigate("/");
   };
 
   const handleContinue = () => {
+    if (window.devVerboseLogging)
+      console.log(
+        "InstructionsPage.tsx: User clicked Continue, navigating to",
+        nextRoute,
+      );
     triggerHapticFeedback("medium");
     navigate(nextRoute);
   };

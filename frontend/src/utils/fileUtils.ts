@@ -1,4 +1,6 @@
 export const formatFileSize = (bytes: number): string => {
+  if (window.devVerboseLogging)
+    console.log("formatFileSize: Formatting bytes:", bytes);
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -7,6 +9,8 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 export const formatSpeed = (bytesPerSecond: number): string => {
+  if (window.devVerboseLogging)
+    console.log("formatSpeed: Formatting speed:", bytesPerSecond);
   if (bytesPerSecond <= 0) return "0 Bytes/s";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -15,6 +19,8 @@ export const formatSpeed = (bytesPerSecond: number): string => {
 };
 
 export const formatTime = (seconds: number): string => {
+  if (window.devVerboseLogging)
+    console.log("formatTime: Formatting seconds:", seconds);
   if (!isFinite(seconds) || seconds < 0) return "—";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);

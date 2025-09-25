@@ -23,6 +23,10 @@ interface FileWithProgress {
 }
 
 export default function SendPage() {
+  if (window.devVerboseLogging)
+    console.log(
+      "SendPage.tsx: SendPage component initialized with initial state",
+    );
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [clientId, setClientId] = useState<string | null>(null);
@@ -43,16 +47,22 @@ export default function SendPage() {
   );
 
   useEffect(() => {
+    if (window.devVerboseLogging)
+      console.log("SendPage.tsx: useEffect initializing SocketService");
     const socketService = new SocketService();
     socketServiceRef.current = socketService;
 
     socketService.onClientId((id) => {
+      if (window.devVerboseLogging)
+        console.log("SendPage.tsx: Received client ID:", id);
       setClientId(id);
       generateQRCode(id);
       setIsLoading(false);
     });
 
     socketService.onConnectionStatus((status) => {
+      if (window.devVerboseLogging)
+        console.log("SendPage.tsx: Connection status updated:", status);
       setConnectionStatus(status);
       if (status.isConnected) {
         triggerHapticFeedback("medium");
@@ -60,6 +70,8 @@ export default function SendPage() {
     });
 
     socketService.onTransferProgress((progress) => {
+      if (window.devVerboseLogging)
+        console.log("SendPage.tsx: Transfer progress updated:", progress);
       updateFileProgress(progress);
     });
 
@@ -68,6 +80,8 @@ export default function SendPage() {
     });
 
     return () => {
+      if (window.devVerboseLogging)
+        console.log("SendPage.tsx: Cleaning up SocketService");
       socketService.disconnect();
     };
   }, []);
@@ -183,6 +197,11 @@ export default function SendPage() {
   };
 
   const addFiles = (newFiles: File[]) => {
+    if (window.devVerboseLogging)
+      console.log(
+        "SendPage.tsx: Adding files to send:",
+        newFiles.map((f) => f.name),
+      );
     setFiles([]);
     setTransferCompleted(false);
     setOverallProgress(0);
@@ -211,16 +230,22 @@ export default function SendPage() {
     setIsSending(true);
 
     if (socketServiceRef.current) {
+      if (window.devVerboseLogging)
+        console.log("SendPage.tsx: Sending files via SocketService");
       socketServiceRef.current.sendFiles(newFiles);
     }
   };
 
   const handleBack = () => {
+    if (window.devVerboseLogging)
+      console.log("SendPage.tsx: User clicked Back, navigating to /");
     triggerHapticFeedback("light");
     navigate("/");
   };
 
   const handleBrowseFiles = () => {
+    if (window.devVerboseLogging)
+      console.log("SendPage.tsx: User clicked browse files");
     triggerHapticFeedback("light");
     fileInputRef.current?.click();
   };

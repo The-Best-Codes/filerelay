@@ -3,6 +3,10 @@ import { FileUp, TextCursorInput } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export default function HomePage() {
+  if (window.devVerboseLogging)
+    console.log(
+      "HomePage.tsx: HomePage component rendered, user can choose to send files or enter code",
+    );
   const navigate = useNavigate();
 
   return (
@@ -14,7 +18,13 @@ export default function HomePage() {
             size="lg"
             variant="outline"
             className="w-full h-16 text-base sm:text-lg rounded-b-none border-b border-border"
-            onClick={() => navigate("/instructions?go=send")}
+            onClick={() => {
+              if (window.devVerboseLogging)
+                console.log(
+                  'HomePage.tsx: User clicked "Send Files", navigating to /instructions?go=send',
+                );
+              navigate("/instructions?go=send");
+            }}
           >
             <FileUp className="size-4 sm:size-6" />
             Send Files from This Device
@@ -23,7 +33,13 @@ export default function HomePage() {
             size="lg"
             variant="outline"
             className="w-full h-16 text-base sm:text-lg rounded-t-none border-t-0"
-            onClick={() => navigate("/instructions?go=enter-code")}
+            onClick={() => {
+              if (window.devVerboseLogging)
+                console.log(
+                  'HomePage.tsx: User clicked "Enter Code", navigating to /instructions?go=enter-code',
+                );
+              navigate("/instructions?go=enter-code");
+            }}
           >
             <TextCursorInput className="size-4 sm:size-6" />
             Enter a Connection Code

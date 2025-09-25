@@ -26,6 +26,11 @@ export default function ReceivePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const clientIdFromUrl = searchParams.get("client-id");
+  if (window.devVerboseLogging)
+    console.log(
+      "ReceivePage.tsx: ReceivePage component initialized, clientId from URL:",
+      clientIdFromUrl,
+    );
 
   const [isLoading, setIsLoading] = useState(!!clientIdFromUrl);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
@@ -37,14 +42,26 @@ export default function ReceivePage() {
   const socketServiceRef = useRef<SocketService | null>(null);
 
   useEffect(() => {
+    if (window.devVerboseLogging)
+      console.log(
+        "ReceivePage.tsx: useEffect triggered, clientIdFromUrl:",
+        clientIdFromUrl,
+      );
     if (clientIdFromUrl) {
       connectToSender(clientIdFromUrl);
     } else {
+      if (window.devVerboseLogging)
+        console.log("ReceivePage.tsx: No clientId, navigating to /enter-code");
       navigate("/enter-code");
     }
   }, [clientIdFromUrl, navigate]);
 
   const connectToSender = async (targetClientId: string) => {
+    if (window.devVerboseLogging)
+      console.log(
+        "ReceivePage.tsx: Connecting to sender with clientId:",
+        targetClientId,
+      );
     if (!targetClientId.trim()) {
       setError("Please enter a valid client ID");
       return;
@@ -57,6 +74,8 @@ export default function ReceivePage() {
       socketServiceRef.current = socketService;
 
       socketService.onConnectionStatus((status) => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: Connection status updated:", status);
         setConnectionStatus(status);
         if (status.isConnected) {
           setIsLoading(false);
@@ -65,6 +84,8 @@ export default function ReceivePage() {
       });
 
       socketService.onMetadataReceive((metadata) => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: Received metadata:", metadata);
         setReceivedFiles((prev) => {
           const existingIndex = prev.findIndex(
             (f) => f.metadata.name === metadata.name,
@@ -93,6 +114,8 @@ export default function ReceivePage() {
       });
 
       socketService.onFileReceive((blob, metadata) => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: File received:", metadata.name);
         triggerHapticFeedback("medium");
         const downloadUrl = URL.createObjectURL(blob);
         setReceivedFiles((prev) => {
@@ -115,6 +138,8 @@ export default function ReceivePage() {
       });
 
       socketService.onTransferProgress((progress) => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: Transfer progress:", progress);
         if (progress.status === "transferring") {
           setReceivedFiles((prev) => {
             const updated = [...prev];
@@ -136,11 +161,15 @@ export default function ReceivePage() {
       });
 
       socketService.onError((errorMsg) => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: Error occurred:", errorMsg);
         setError(errorMsg);
         setIsLoading(false);
       });
 
       setTimeout(() => {
+        if (window.devVerboseLogging)
+          console.log("ReceivePage.tsx: Attempting to connect to client");
         socketService.connectToClient(targetClientId);
       }, 1000);
     } catch {
@@ -150,6 +179,8 @@ export default function ReceivePage() {
   };
 
   const handleDownload = (file: ReceivedFile) => {
+    if (window.devVerboseLogging)
+      console.log("ReceivePage.tsx: Downloading file:", file.metadata.name);
     triggerHapticFeedback("light");
     if (file.downloadUrl) {
       const link = document.createElement("a");
@@ -162,6 +193,8 @@ export default function ReceivePage() {
   };
 
   const handleBack = () => {
+    if (window.devVerboseLogging)
+      console.log("ReceivePage.tsx: User clicked Back, navigating to /");
     triggerHapticFeedback("light");
     navigate("/");
   };

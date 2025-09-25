@@ -7,11 +7,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function EnterCodePage() {
+  if (window.devVerboseLogging)
+    console.log("EnterCodePage.tsx: EnterCodePage component rendered");
   const navigate = useNavigate();
   const [clientId, setClientId] = useState("");
   const [error, setError] = useState("");
 
   const handleBack = () => {
+    if (window.devVerboseLogging)
+      console.log("EnterCodePage.tsx: User clicked Back, navigating to /");
     triggerHapticFeedback("light");
     navigate("/");
   };
@@ -35,6 +39,11 @@ export default function EnterCodePage() {
   };
 
   const handleContinue = () => {
+    if (window.devVerboseLogging)
+      console.log(
+        "EnterCodePage.tsx: User clicked Continue with clientId:",
+        clientId,
+      );
     const validationError = validateClientId(clientId);
     if (validationError) {
       setError(validationError);

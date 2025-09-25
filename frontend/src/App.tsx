@@ -10,24 +10,45 @@ import SendPage from "./pages/SendPage";
 import { checkWebRTCSupport } from "./utils/webrtcUtils";
 
 function App() {
+  if (window.devVerboseLogging)
+    console.log(
+      "App.tsx: App component initialized with initial state: webrtcSupported=null, webrtcDetails=[], showWarning=false",
+    );
   const [webrtcSupported, setWebrtcSupported] = useState<boolean | null>(null);
   const [webrtcDetails, setWebrtcDetails] = useState<string[]>([]);
   const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
+    if (window.devVerboseLogging)
+      console.log("App.tsx: useEffect triggered to check WebRTC support");
     const { supported, details } = checkWebRTCSupport();
+    if (window.devVerboseLogging)
+      console.log("App.tsx: WebRTC support check result:", {
+        supported,
+        details,
+      });
     setWebrtcSupported(supported);
     setWebrtcDetails(details);
     if (!supported) {
+      if (window.devVerboseLogging)
+        console.log(
+          "App.tsx: WebRTC not supported, setting showWarning to true",
+        );
       setShowWarning(true);
     }
   }, []);
 
   const handleTryAnyway = () => {
+    if (window.devVerboseLogging)
+      console.log('App.tsx: User clicked "Proceed Anyway", hiding warning');
     setShowWarning(false);
   };
 
   if (webrtcSupported === null) {
+    if (window.devVerboseLogging)
+      console.log(
+        "App.tsx: Rendering loading state while checking WebRTC support",
+      );
     return (
       <div className="min-h-[100svh] bg-background text-foreground flex items-center justify-center p-4">
         <div className="text-center">
@@ -41,6 +62,11 @@ function App() {
   }
 
   if (showWarning) {
+    if (window.devVerboseLogging)
+      console.log(
+        "App.tsx: Rendering WebRTC compatibility warning with details:",
+        webrtcDetails,
+      );
     return (
       <div className="min-h-[100svh] bg-background text-foreground flex items-center justify-center p-4">
         <div className="max-w-md w-full space-y-6">
@@ -66,7 +92,11 @@ function App() {
           <div className="flex flex-col md:flex-row gap-3">
             <Button
               variant="outline"
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                if (window.devVerboseLogging)
+                  console.log('App.tsx: User clicked "Refresh Page"');
+                window.location.reload();
+              }}
               className="flex-1"
             >
               Refresh Page
@@ -80,6 +110,8 @@ function App() {
     );
   }
 
+  if (window.devVerboseLogging)
+    console.log("App.tsx: Rendering main app with Router and routes");
   return (
     <Router>
       <div className="min-h-[100svh] bg-background text-foreground flex flex-col relative">
