@@ -1,0 +1,11 @@
+# if you can't manually set these install, build, and start steps in your deployment provider (e.g. Coolify), you can use this custom nixpacks.toml.
+# - install: `bun install`
+# - build: `cd frontend && bun run build`
+# - start: `cd backend && bun run start`
+
+
+[phases.setup]
+nixPkgs = ['bun']
+nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
+
+# TODO: Fill
