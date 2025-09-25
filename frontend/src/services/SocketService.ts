@@ -47,7 +47,7 @@ class SocketService {
   private fileMetadata: FileMetadata | null = null;
   private transferStartTime: number = 0;
 
-  private readonly CHUNK_SIZE = 32 * 1024; // 32KB
+  private readonly CHUNK_SIZE = 64 * 1024; // 64KB
 
   constructor() {
     if (window.devVerboseLogging)
@@ -476,7 +476,7 @@ class SocketService {
           return;
         }
 
-        if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 8) {
+        if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 4) {
           this.dataChannel!.onbufferedamountlow = () => {
             this.dataChannel!.onbufferedamountlow = null; // one-time listener
             sendNextChunk();
@@ -524,7 +524,7 @@ class SocketService {
         reader.readAsArrayBuffer(slice);
       };
 
-      this.dataChannel.bufferedAmountLowThreshold = this.CHUNK_SIZE * 4;
+      this.dataChannel.bufferedAmountLowThreshold = this.CHUNK_SIZE * 2;
       sendNextChunk();
     });
   }
