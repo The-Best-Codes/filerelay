@@ -509,9 +509,8 @@ class SocketService {
                 status: "transferring",
               });
 
-              // Use setTimeout to avoid blocking the event loop on very fast connections
-              // DO NOT use `requestAnimationFrame`, as it degrades performance and pauses when the tab is "snoozed"
-              setTimeout(sendNextChunk, 0);
+              // Use queueMicrotask to avoid blocking the event loop on very fast connections
+              queueMicrotask(sendNextChunk);
             } catch (error) {
               console.error("Error sending chunk:", error);
               reject(error);
