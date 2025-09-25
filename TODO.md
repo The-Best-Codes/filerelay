@@ -1,0 +1,2 @@
+- Add screen wakelock
+- Use a web worker so tab can be non-focused and still run
