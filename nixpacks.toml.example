@@ -10,6 +10,7 @@ nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
 
 [phases.install]
 cmds = ['bun run install']
+cacheDirectories = ['/root/.npm', '/root/.bun/install/']
 
 [phases.build]
 cmds = ['bun run build']
