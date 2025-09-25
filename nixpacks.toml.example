@@ -8,4 +8,11 @@
 nixPkgs = ['bun']
 nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
 
-# TODO: Fill
+[phases.install]
+cmds = ['bun run install']
+
+[phases.build]
+cmds = ['bun run build']
+
+[phases.start]
+cmds = ['bun run start']
