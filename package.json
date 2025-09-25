@@ -6,9 +6,5 @@
     "build": "cd frontend && bun run build && cd .. ",
     "start": "cd backend && bun run start && cd .."
   },
-  "author": "The-Best-codes",
-  "cacheDirectories": [
-    "frontend/node_modules",
-    "backend/node_modules"
-  ]
+  "author": "The-Best-codes"
 }
