@@ -1,1 +1,7 @@
 node_modules/
+lightning.db
+
+uploads/*
+!uploads/.gitkeep
+
+.env

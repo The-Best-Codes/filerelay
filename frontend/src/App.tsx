@@ -5,6 +5,9 @@ import { Button } from "./components/ui/button";
 import EnterCodePage from "./pages/EnterCodePage";
 import HomePage from "./pages/HomePage";
 import InstructionsPage from "./pages/InstructionsPage";
+import LightningAuthPage from "./pages/LightningAuthPage";
+import LightningReceivePage from "./pages/LightningReceivePage";
+import LightningSendPage from "./pages/LightningSendPage";
 import ReceivePage from "./pages/ReceivePage";
 import SendPage from "./pages/SendPage";
 import { checkWebRTCSupport } from "./utils/webrtcUtils";
@@ -126,6 +129,9 @@ function App() {
           <Route path="/send" element={<SendPage />} />
           <Route path="/receive" element={<ReceivePage />} />
           <Route path="/enter-code" element={<EnterCodePage />} />
+          <Route path="/lightning-auth" element={<LightningAuthPage />} />
+          <Route path="/lightning-send" element={<LightningSendPage />} />
+          <Route path="/lightning-receive" element={<LightningReceivePage />} />
         </Routes>
       </div>
     </Router>

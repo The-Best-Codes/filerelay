@@ -2,12 +2,43 @@ const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const path = require("path");
+const fs = require("fs");
+const crypto = require("crypto");
+const sqlite3 = require("sqlite3").verbose();
+const multer = require("multer");
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 1869;
+
+// Initialize database
+const db = new sqlite3.Database(path.join(__dirname, "lightning.db"));
+db.run(`CREATE TABLE IF NOT EXISTS lightning_files (
+  id TEXT PRIMARY KEY,
+  originalname TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  upload_time TEXT NOT NULL
+)`);
+
+// Create uploads directory
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const id = crypto.randomUUID();
+    cb(null, id);
+  }
+});
+const upload = multer({ storage: storage });
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 

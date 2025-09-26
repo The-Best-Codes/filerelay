@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileUp, TextCursorInput } from "lucide-react";
+import { FileUp, TextCursorInput, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export default function HomePage() {
@@ -17,7 +17,7 @@ export default function HomePage() {
           <Button
             size="lg"
             variant="outline"
-            className="w-full h-16 text-base sm:text-lg rounded-b-none border-b border-border"
+            className="w-full h-16 text-base sm:text-lg rounded-t-lg rounded-b-none border-b border-border"
             onClick={() => {
               if (window.devVerboseLogging)
                 console.log(
@@ -32,7 +32,7 @@ export default function HomePage() {
           <Button
             size="lg"
             variant="outline"
-            className="w-full h-16 text-base sm:text-lg rounded-t-none border-t-0"
+            className="w-full h-16 text-base sm:text-lg rounded-t-none rounded-b-none border-t-0 border-b border-border"
             onClick={() => {
               if (window.devVerboseLogging)
                 console.log(
@@ -43,6 +43,22 @@ export default function HomePage() {
           >
             <TextCursorInput className="size-4 sm:size-6" />
             Enter a Connection Code
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="w-full h-16 text-base sm:text-lg rounded-t-none border-t-0 rounded-b-lg"
+            onClick={() => {
+              if (window.devVerboseLogging)
+                console.log(
+                  'HomePage.tsx: User clicked "Lightning File Transfer", navigating to /lightning-auth',
+                );
+              navigate("/lightning-auth");
+            }}
+          >
+            <Zap className="size-4 sm:size-6" />
+            Lightning File Transfer
+            <span className="ml-2 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">Beta</span>
           </Button>
         </div>
       </div>
