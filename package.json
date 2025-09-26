@@ -3,7 +3,8 @@
   "version": "1.0.4",
   "scripts": {
     "install": "cd frontend && bun install --frozen-lockfile && cd .. && cd backend && bun install --frozen-lockfile && cd ..",
-    "build": "cd frontend && bun run build && cd .. ",
+    "prebuild": "bun i -g node-gyp",
+    "build": "bun run prebuild && cd frontend && bun run build && cd ..",
     "start": "cd backend && bun run start && cd .."
   },
   "author": "The-Best-codes"
