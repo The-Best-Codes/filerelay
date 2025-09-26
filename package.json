@@ -1,10 +1,19 @@
 {
   "name": "filerelay",
   "version": "1.0.4",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "install": "cd frontend && bun install --frozen-lockfile && cd .. && cd backend && bun install --frozen-lockfile && cd ..",
-    "build": "cd frontend && bun run build && cd ..",
-    "start": "cd backend && bun run start && cd .."
+    "build": "bun run --filter filerelay-frontend build",
+    "start": "bun run --filter filerelay-backend start",
+    "dev": "bun run --filter filerelay-frontend dev"
   },
-  "author": "The-Best-codes"
+  "author": "The-Best-codes",
+  "trustedDependencies": [
+    "better-sqlite3",
+    "esbuild",
+    "@tailwindcss/oxide"
+  ]
 }

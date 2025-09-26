@@ -1,5 +1,5 @@
 # if you can't manually set these install, build, and start steps in your deployment provider (e.g. Coolify), you can use this custom nixpacks.toml.
-# - install: `bun run install`
+# - install: `bun install --frozen-lockfile`
 # - build: `bun run build`
 # - start: `bun run start`
 
@@ -13,8 +13,8 @@ aptPkgs = ["gcc", "g++", "make", "python3"]
 nixLibs = ['gcc13.cc.lib']
 
 [phases.install]
-cmds = ['bun run install']
-cacheDirectories = ['/root/.npm', '/root/.bun/install/', '/app/backend/node_modules', '/app/frontend/node_modules']
+cmds = ['bun install --frozen-lockfile']
+cacheDirectories = ['...', '/root/.npm', '/root/.bun/install/']
 
 [phases.build]
 cmds = ['bun run build']
