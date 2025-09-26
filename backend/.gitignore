@@ -1,5 +1,8 @@
 node_modules/
+
 lightning.db
+lightning.db-shm
+lightning.db-wal
 
 uploads/*
 !uploads/.gitkeep

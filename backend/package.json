@@ -8,11 +8,10 @@
   "author": "The-Best-Codes",
   "type": "module",
   "dependencies": {
+    "better-sqlite3": "^12.4.1",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "multer": "^2.0.2",
-    "socket.io": "^4.8.1",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "socket.io": "^4.8.1"
   }
 }
