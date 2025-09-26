@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { getFileIcon } from "@/utils/fileIconUtils";
 import { formatFileSize } from "@/utils/fileUtils";
-import { ArrowLeft, Download, Loader2, AlertCircle, Clock } from "lucide-react";
+import { AlertCircle, ArrowLeft, Download, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 
@@ -123,10 +123,6 @@ export default function LightningReceivePage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Lightning Receive</h1>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              Beta
-            </p>
           </div>
         </div>
 

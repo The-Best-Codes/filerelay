@@ -1,184 +1,237 @@
-const express = require("express");
-const http = require("http");
-const socketIo = require("socket.io");
-const path = require("path");
-const fs = require("fs");
-const crypto = require("crypto");
-const sqlite3 = require("sqlite3").verbose();
-const multer = require("multer");
-require("dotenv").config();
+import crypto from "crypto";
+import "dotenv/config";
+import express from "express";
+import fs from "fs/promises";
+import http from "http";
+import multer from "multer";
+import path, { dirname } from "path";
+import { Server as SocketIoServer } from "socket.io";
+import { open } from "sqlite";
+import sqlite3 from "sqlite3";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const PORT = process.env.PORT || 1869;
+const LIGHTNING_ACCESS_CODE = process.env.LIGHTNING_ACCESS_CODE || "";
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+const DB_PATH = path.join(__dirname, "lightning.db");
+const FILE_EXPIRATION_MINUTES = 10;
+const CLEANUP_INTERVAL_MINUTES = 5;
+
+if (!LIGHTNING_ACCESS_CODE) {
+  console.warn(
+    "Warning: LIGHTNING_ACCESS_CODE is not set. Lightning feature will not be secure.",
+  );
+}
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = new SocketIoServer(server);
 
-const PORT = process.env.PORT || 1869;
+const log = (level, message, ...args) => {
+  console.log(
+    `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}`,
+    ...args,
+  );
+};
 
-// Initialize database
-const db = new sqlite3.Database(path.join(__dirname, "lightning.db"));
-db.run(`CREATE TABLE IF NOT EXISTS lightning_files (
-  id TEXT PRIMARY KEY,
-  originalname TEXT NOT NULL,
-  size INTEGER NOT NULL,
-  upload_time TEXT NOT NULL
-)`);
+const initializeDatabase = async () => {
+  try {
+    const db = await open({
+      filename: DB_PATH,
+      driver: sqlite3.Database,
+    });
+    await db.exec(`CREATE TABLE IF NOT EXISTS lightning_files (
+      id TEXT PRIMARY KEY,
+      originalname TEXT NOT NULL,
+      size INTEGER NOT NULL,
+      upload_time TEXT NOT NULL
+    )`);
+    log("info", "Database initialized successfully.");
+    return db;
+  } catch (error) {
+    log("error", "Failed to initialize database:", error);
+    process.exit(1);
+  }
+};
 
-// Create uploads directory
-const uploadsDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const db = await initializeDatabase();
 
-// Multer configuration
+const cleanupExpiredFiles = async () => {
+  log("info", "Running expired files cleanup job...");
+  const expirationTime = new Date(
+    Date.now() - FILE_EXPIRATION_MINUTES * 60 * 1000,
+  ).toISOString();
+
+  try {
+    const expiredFiles = await db.all(
+      "SELECT id FROM lightning_files WHERE upload_time < ?",
+      [expirationTime],
+    );
+
+    if (expiredFiles.length === 0) {
+      log("info", "No expired files to clean up.");
+      return;
+    }
+
+    log("info", `Found ${expiredFiles.length} expired file(s).`);
+
+    for (const file of expiredFiles) {
+      const filePath = path.join(UPLOADS_DIR, file.id);
+      try {
+        await fs.unlink(filePath);
+        await db.run("DELETE FROM lightning_files WHERE id = ?", [file.id]);
+        log("info", `Cleaned up expired file: ${file.id}`);
+      } catch (err) {
+        if (err.code === "ENOENT") {
+          log(
+            "warn",
+            `File not found for deletion, removing DB entry: ${file.id}`,
+          );
+          await db.run("DELETE FROM lightning_files WHERE id = ?", [file.id]);
+        } else {
+          log("error", `Error cleaning up file ${file.id}:`, err);
+        }
+      }
+    }
+  } catch (err) {
+    log("error", "Error during cleanup job:", err);
+  }
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadsDir);
+    cb(null, UPLOADS_DIR);
   },
   filename: (req, file, cb) => {
-    const id = crypto.randomUUID();
-    cb(null, id);
+    cb(null, crypto.randomUUID());
   },
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
 app.use(express.json());
 
-const accessCode = process.env.LIGHTNING_ACCESS_CODE || "";
-console.log("Access code loaded:", accessCode ? "***" : "empty");
-
-// Lightning API Routes
-
 app.post("/api/lightning-validate-code", (req, res) => {
   const { code } = req.body;
-  res.json({ valid: code === accessCode });
+  const isValid = !!LIGHTNING_ACCESS_CODE && code === LIGHTNING_ACCESS_CODE;
+  log(
+    "info",
+    `Validation attempt for code "${code ? "***" : "empty"}": ${isValid ? "Success" : "Failure"}`,
+  );
+  res.json({ valid: isValid });
 });
 
-app.post("/api/lightning-upload", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-  if (!req.body.code) {
-    return res.status(400).json({ error: "No access code provided" });
-  }
-  if (req.body.code !== accessCode) {
-    console.log(
-      "Received code:",
-      req.body.code,
-      "Expected:",
-      accessCode ? "***" : "empty",
-    );
-    return res.status(400).json({ error: "Invalid access code" });
-  }
-
-  const id = req.file.filename;
-  const originalname = req.file.originalname;
-  const size = req.file.size;
-  const upload_time = new Date().toISOString();
-
-  db.run(
-    "INSERT INTO lightning_files (id, originalname, size, upload_time) VALUES (?, ?, ?, ?)",
-    [id, originalname, size, upload_time],
-    function (err) {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Database error" });
+app.post(
+  "/api/lightning-upload",
+  upload.single("file"),
+  async (req, res, next) => {
+    try {
+      if (req.body.code !== LIGHTNING_ACCESS_CODE) {
+        log("warn", "Invalid access code on upload attempt.");
+        return res
+          .status(403)
+          .json({ success: false, error: "Invalid access code" });
+      }
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "No file uploaded" });
       }
 
-      // Delete after 10 minutes
-      setTimeout(
-        () => {
-          fs.unlink(path.join(uploadsDir, id), (unlinkErr) => {
-            if (unlinkErr) console.error("Delete file error:", unlinkErr);
-          });
-          db.run(
-            "DELETE FROM lightning_files WHERE id = ?",
-            [id],
-            (deleteErr) => {
-              if (deleteErr) console.error("Delete DB error:", deleteErr);
-            },
-          );
-        },
-        10 * 60 * 1000,
+      const { filename: id, originalname, size } = req.file;
+      const upload_time = new Date().toISOString();
+
+      await db.run(
+        "INSERT INTO lightning_files (id, originalname, size, upload_time) VALUES (?, ?, ?, ?)",
+        [id, originalname, size, upload_time],
       );
 
-      res.json({ id });
-    },
-  );
-});
+      log(
+        "info",
+        `File uploaded: ${originalname} (${size} bytes) with ID: ${id}`,
+      );
+      res.status(200).json({ success: true, id });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
 
-app.get("/api/lightning-metadata/:id", (req, res) => {
-  const { id } = req.params;
-  db.get("SELECT * FROM lightning_files WHERE id = ?", [id], (err, row) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Database error" });
+const getFileMetadata = async (id) => {
+  const row = await db.get("SELECT * FROM lightning_files WHERE id = ?", [id]);
+  if (!row) return null;
+
+  const uploadTime = new Date(row.upload_time);
+  const now = new Date();
+  const ageMinutes = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
+
+  if (ageMinutes > FILE_EXPIRATION_MINUTES) {
+    log("info", `Attempt to access expired file: ${id}`);
+    return null;
+  }
+  return row;
+};
+
+app.get("/api/lightning-metadata/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const metadata = await getFileMetadata(id);
+
+    if (!metadata) {
+      return res
+        .status(404)
+        .json({ success: false, error: "File not found or has expired" });
     }
 
-    if (!row) {
-      return res.status(404).json({ error: "File not found" });
-    }
-
-    const uploadTime = new Date(row.upload_time);
-    const now = new Date();
-    const diff = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
-
-    if (diff > 10) {
-      // Expired, delete
-      fs.unlink(path.join(uploadsDir, id), (unlinkErr) => {
-        if (unlinkErr) console.error("Delete expired file:", unlinkErr);
-      });
-      db.run("DELETE FROM lightning_files WHERE id = ?", [id]);
-      return res.status(404).json({ error: "Expired" });
-    }
-
-    res.json({ originalname: row.originalname, size: row.size });
-  });
-});
-
-app.get("/api/file-download/:id", (req, res) => {
-  const { id } = req.params;
-  db.get("SELECT * FROM lightning_files WHERE id = ?", [id], (err, row) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send("Database error");
-    }
-
-    if (!row) {
-      return res.status(404).send("Not found");
-    }
-
-    const uploadTime = new Date(row.upload_time);
-    const now = new Date();
-    const diff = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
-
-    if (diff > 10) {
-      // Expired, delete
-      fs.unlink(path.join(uploadsDir, id), (unlinkErr) => {
-        if (unlinkErr) console.error("Delete expired file:", unlinkErr);
-      });
-      db.run("DELETE FROM lightning_files WHERE id = ?", [id]);
-      return res.status(404).send("Not found");
-    }
-
-    const filePath = path.join(uploadsDir, id);
-    res.download(filePath, row.originalname, (downloadErr) => {
-      if (downloadErr) {
-        console.error("Download error:", downloadErr);
-      }
-      // Note: File deletion is handled by the 10-min timeout from upload, not here
+    res.json({
+      success: true,
+      data: {
+        originalname: metadata.originalname,
+        size: metadata.size,
+        upload_time: metadata.upload_time,
+      },
     });
-  });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get("/api/file-download/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const metadata = await getFileMetadata(id);
+
+    if (!metadata) {
+      return res.status(404).send("File not found or has expired.");
+    }
+
+    const filePath = path.join(UPLOADS_DIR, id);
+    res.download(filePath, metadata.originalname, (err) => {
+      if (err) {
+        log("error", `Download error for file ${id}:`, err);
+      } else {
+        log("info", `File downloaded: ${metadata.originalname} (ID: ${id})`);
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-// Fallback to serve index.html for client-side routing
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-const clients = {};
+app.use((err, req, res, next) => {
+  log("error", "An unhandled error occurred:", err);
+  res.status(500).json({ success: false, error: "Internal Server Error" });
+});
 
+const clients = {};
 io.on("connection", (socket) => {
   const clientId = Math.random().toString(36).substring(2, 8);
   clients[clientId] = socket.id;
@@ -193,8 +246,8 @@ io.on("connection", (socket) => {
     if (targetSocketId) {
       const room = Math.random().toString(36).substring(2, 8);
       socket.join(room);
-      io.to(targetSocketId).emit("join", room, true); // isInitiator = true
-      socket.emit("join", room, false); // isInitiator = false
+      io.to(targetSocketId).emit("join", room, true);
+      socket.emit("join", room, false);
     }
   });
 
@@ -211,11 +264,21 @@ io.on("connection", (socket) => {
     for (const id in clients) {
       if (clients[id] === socket.id) {
         delete clients[id];
+        break;
       }
     }
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Signaling server is running on port ${PORT}`);
-});
+const startServer = async () => {
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+
+  cleanupExpiredFiles();
+  setInterval(cleanupExpiredFiles, CLEANUP_INTERVAL_MINUTES * 60 * 1000);
+
+  server.listen(PORT, () => {
+    log("info", `Server is running on port ${PORT}`);
+  });
+};
+
+startServer();
