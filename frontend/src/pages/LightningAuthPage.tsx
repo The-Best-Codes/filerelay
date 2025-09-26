@@ -6,7 +6,9 @@ import { useNavigate } from "react-router";
 
 export default function LightningAuthPage() {
   if (window.devVerboseLogging)
-    console.log("LightningAuthPage.tsx: LightningAuthPage component initialized");
+    console.log(
+      "LightningAuthPage.tsx: LightningAuthPage component initialized",
+    );
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -16,7 +18,10 @@ export default function LightningAuthPage() {
 
   const validateCode = async (providedCode: string) => {
     if (window.devVerboseLogging)
-      console.log("LightningAuthPage.tsx: Validating code:", providedCode ? "***" : "none");
+      console.log(
+        "LightningAuthPage.tsx: Validating code:",
+        providedCode ? "***" : "none",
+      );
     try {
       setIsValidating(true);
       setError(null);
@@ -40,7 +45,9 @@ export default function LightningAuthPage() {
 
   useEffect(() => {
     if (window.devVerboseLogging)
-      console.log("LightningAuthPage.tsx: useEffect checking sessionStorage for lightning_code");
+      console.log(
+        "LightningAuthPage.tsx: useEffect checking sessionStorage for lightning_code",
+      );
     const storedCode = sessionStorage.getItem("lightning_code");
     if (storedCode) {
       validateCode(storedCode).then((valid) => {
@@ -93,7 +100,9 @@ export default function LightningAuthPage() {
       <div className="flex-1 flex justify-center items-center p-4 pt-20 overflow-auto">
         <div className="text-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground">Access granted, redirecting...</p>
+          <p className="text-muted-foreground">
+            Access granted, redirecting...
+          </p>
         </div>
       </div>
     );
@@ -109,7 +118,6 @@ export default function LightningAuthPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Lightning File Transfer</h1>
-            <p className="text-sm text-muted-foreground">Beta</p>
           </div>
         </div>
 
@@ -118,7 +126,8 @@ export default function LightningAuthPage() {
             <Lock className="h-8 w-8 mx-auto text-primary" />
             <h2 className="text-lg font-semibold">Enter Access Code</h2>
             <p className="text-sm text-muted-foreground">
-              Provide the access code to enable Lightning File Transfer.
+              Provide the access code to enable Lightning File Transfer. If you
+              don't have one, you can request one from the FileRelay team.
             </p>
           </div>
 
@@ -138,7 +147,11 @@ export default function LightningAuthPage() {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={isValidating || !code.trim()}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isValidating || !code.trim()}
+            >
               {isValidating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

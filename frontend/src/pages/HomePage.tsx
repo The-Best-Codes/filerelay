@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileUp, TextCursorInput, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -57,8 +58,8 @@ export default function HomePage() {
             }}
           >
             <Zap className="size-4 sm:size-6" />
-            Lightning File Transfer
-            <span className="ml-2 bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">Beta</span>
+            Use Lightning File Transfer
+            <Badge>Beta</Badge>
           </Button>
         </div>
       </div>

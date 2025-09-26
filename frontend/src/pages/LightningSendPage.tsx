@@ -19,7 +19,9 @@ interface FileProgress {
 
 export default function LightningSendPage() {
   if (window.devVerboseLogging)
-    console.log("LightningSendPage.tsx: LightningSendPage component initialized");
+    console.log(
+      "LightningSendPage.tsx: LightningSendPage component initialized",
+    );
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [fileProgress, setFileProgress] = useState<FileProgress>({
@@ -39,7 +41,9 @@ export default function LightningSendPage() {
   useEffect(() => {
     const storedCode = sessionStorage.getItem("lightning_code");
     if (!storedCode) {
-      console.warn("LightningSendPage.tsx: No access code in sessionStorage, redirecting to auth");
+      console.warn(
+        "LightningSendPage.tsx: No access code in sessionStorage, redirecting to auth",
+      );
       navigate("/lightning-auth");
       return;
     }
@@ -53,7 +57,9 @@ export default function LightningSendPage() {
 
   const generateQRCode = async (id: string) => {
     try {
-      const baseUrl = import.meta.env.VITE_BASE_URL || `${window.location.protocol}//${window.location.host}`;
+      const baseUrl =
+        import.meta.env.VITE_BASE_URL ||
+        `${window.location.protocol}//${window.location.host}`;
       const receiveUrl = `${baseUrl}/lightning-receive?file-id=${id}`;
       const qrUrl = await QRCode.toDataURL(receiveUrl, {
         width: 256,
@@ -92,7 +98,11 @@ export default function LightningSendPage() {
   const uploadFile = (file: File) => {
     const storedCode = sessionStorage.getItem("lightning_code");
     if (!storedCode) {
-      setFileProgress(prev => ({ ...prev, status: "error", error: "Access code not found" }));
+      setFileProgress((prev) => ({
+        ...prev,
+        status: "error",
+        error: "Access code not found",
+      }));
       return;
     }
 
@@ -110,7 +120,7 @@ export default function LightningSendPage() {
       if (e.lengthComputable) {
         const progress = calculateProgress(e.loaded, e.total);
         const { transferRate, eta } = calculateSpeedAndETA(e.loaded, e.total);
-        setFileProgress(prev => ({
+        setFileProgress((prev) => ({
           ...prev,
           progress,
           transferRate,
@@ -127,24 +137,45 @@ export default function LightningSendPage() {
           setFileId(response.id);
           generateQRCode(response.id);
           setUploadCompleted(true);
-          setFileProgress(prev => ({ ...prev, status: "completed" }));
+          setFileProgress((prev) => ({ ...prev, status: "completed" }));
           triggerHapticFeedback("medium");
         } catch {
-          setFileProgress(prev => ({ ...prev, status: "error", error: "Invalid response" }));
+          setFileProgress((prev) => ({
+            ...prev,
+            status: "error",
+            error: "Invalid response",
+          }));
         }
       } else {
-        setFileProgress(prev => ({ ...prev, status: "error", error: `Upload failed: ${xhr.status}` }));
+        let errorMsg = `Upload failed: ${xhr.status}`;
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response && response.error) {
+            errorMsg = response.error;
+          }
+        } catch {
+          // Ignore parse error, use default message
+        }
+        setFileProgress((prev) => ({
+          ...prev,
+          status: "error",
+          error: errorMsg,
+        }));
       }
       xhrRef.current = null;
     });
 
     xhr.addEventListener("error", () => {
-      setFileProgress(prev => ({ ...prev, status: "error", error: "Upload error" }));
+      setFileProgress((prev) => ({
+        ...prev,
+        status: "error",
+        error: "Upload error",
+      }));
       xhrRef.current = null;
     });
 
     xhr.addEventListener("abort", () => {
-      setFileProgress(prev => ({ ...prev, status: "idle" }));
+      setFileProgress((prev) => ({ ...prev, status: "idle" }));
       xhrRef.current = null;
     });
 
@@ -168,7 +199,8 @@ export default function LightningSendPage() {
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       const file = files[0];
-      if (file.size > 0) { // Basic validation
+      if (file.size > 0) {
+        // Basic validation
         setFileProgress({ file, progress: 0, status: "idle" });
         uploadFile(file);
       }
@@ -192,9 +224,9 @@ export default function LightningSendPage() {
 
   const handleBack = () => {
     if (window.devVerboseLogging)
-      console.log("LightningSendPage.tsx: User clicked Back, navigating to /lightning-auth");
+      console.log("LightningSendPage.tsx: User clicked Back, navigating to /");
     triggerHapticFeedback("light");
-    navigate("/lightning-auth");
+    navigate("/");
   };
 
   const handleBrowseFiles = () => {
@@ -242,9 +274,12 @@ export default function LightningSendPage() {
           <div className="text-center space-y-6">
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
             <div>
-              <h2 className="text-xl font-semibold mb-2">File Uploaded Successfully!</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                File Uploaded Successfully!
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Share this QR code or link with the recipient to download the file.
+                Share this QR code or link with the recipient to download the
+                file.
               </p>
             </div>
             {qrCodeUrl && (
@@ -274,7 +309,9 @@ export default function LightningSendPage() {
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {getFileIcon(fileProgress.file)}
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate text-base">{fileProgress.file.name}</p>
+                  <p className="font-medium truncate text-base">
+                    {fileProgress.file.name}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {formatFileSize(fileProgress.file.size)}
                   </p>
@@ -296,12 +333,16 @@ export default function LightningSendPage() {
                   </span>
                   {fileProgress.status === "uploading" && (
                     <div className="flex gap-3 tabular-nums">
-                      {fileProgress.transferRate && fileProgress.transferRate > 0 && (
-                        <span>Speed: {formatSpeed(fileProgress.transferRate)}</span>
-                      )}
-                      {fileProgress.eta !== undefined && fileProgress.eta > 0 && (
-                        <span>ETA: {formatTime(fileProgress.eta)}</span>
-                      )}
+                      {fileProgress.transferRate &&
+                        fileProgress.transferRate > 0 && (
+                          <span>
+                            Speed: {formatSpeed(fileProgress.transferRate)}
+                          </span>
+                        )}
+                      {fileProgress.eta !== undefined &&
+                        fileProgress.eta > 0 && (
+                          <span>ETA: {formatTime(fileProgress.eta)}</span>
+                        )}
                     </div>
                   )}
                 </div>
@@ -314,7 +355,11 @@ export default function LightningSendPage() {
             )}
 
             {fileProgress.status === "uploading" && (
-              <Button variant="outline" onClick={handleCancelUpload} className="w-full">
+              <Button
+                variant="outline"
+                onClick={handleCancelUpload}
+                className="w-full"
+              >
                 Cancel Upload
               </Button>
             )}
@@ -332,8 +377,7 @@ export default function LightningSendPage() {
             <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
             <div className="space-y-2">
               <p className="text-lg font-medium">
-                Drop a file here or{" "}
-                <span className="text-primary">browse</span>
+                Drop a file here or <span className="text-primary">browse</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 Select one file to upload via Lightning File Transfer.
