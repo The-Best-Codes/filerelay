@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { getFileIcon } from "@/utils/fileIconUtils";
 import { formatFileSize, formatSpeed, formatTime } from "@/utils/fileUtils";
 import { triggerHapticFeedback } from "@/utils/haptics";
-import { ArrowLeft, CheckCircle2, Loader2, Upload, Zap } from "lucide-react";
+import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
@@ -263,38 +263,24 @@ export default function LightningSendPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Lightning Send</h1>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <Zap className="h-4 w-4" />
-              Beta
-            </p>
           </div>
         </div>
 
         {uploadCompleted ? (
           <div className="text-center space-y-6">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-            <div>
-              <h2 className="text-xl font-semibold mb-2">
-                File Uploaded Successfully!
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Share this QR code or link with the recipient to download the
-                file.
-              </p>
-            </div>
             {qrCodeUrl && (
               <div className="space-y-4">
                 <img
                   src={qrCodeUrl}
                   alt="QR Code"
-                  className="w-56 h-56 mx-auto border-2 border-border rounded-lg"
+                  className="w-56 h-56 sm:w-64 sm:h-64 mx-auto border-2 border-border rounded-lg"
                 />
                 <div className="bg-muted px-4 py-3 rounded-lg font-mono text-base overflow-hidden">
                   <a
                     href={`/lightning-receive?file-id=${fileId}`}
                     className="text-primary hover:underline break-all"
                   >
-                    /lightning-receive?file-id={fileId}
+                    {window.location.origin}/lightning-receive?file-id={fileId}
                   </a>
                 </div>
               </div>

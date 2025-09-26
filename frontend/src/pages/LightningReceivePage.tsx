@@ -92,10 +92,6 @@ export default function LightningReceivePage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Lightning Receive</h1>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                Beta
-              </p>
             </div>
           </div>
           <div className="space-y-4">
