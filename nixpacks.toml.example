@@ -14,7 +14,6 @@ nixLibs = ['gcc13.cc.lib']
 
 [phases.install]
 cmds = ['bun install --frozen-lockfile']
-cacheDirectories = ['...', '/root/.npm', '/root/.bun/install/']
 
 [phases.build]
 cmds = ['bun run build']

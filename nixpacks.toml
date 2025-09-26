@@ -5,6 +5,3 @@ aptPkgs = ["gcc", "g++", "make", "python3"]
 
 [phases.runtime]
 nixLibs = ['gcc13.cc.lib']
-
-[phases.install]
-cacheDirectories = ['...', '/root/.npm', '/root/.bun/install/']
