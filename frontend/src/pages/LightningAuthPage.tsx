@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, ArrowRight, Loader2, Lock } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function LightningAuthPage() {
@@ -16,7 +16,7 @@ export default function LightningAuthPage() {
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const validateCode = async (providedCode: string) => {
+  const validateCode = useCallback(async (providedCode: string) => {
     if (window.devVerboseLogging)
       console.log(
         "LightningAuthPage.tsx: Validating code:",
@@ -33,10 +33,10 @@ export default function LightningAuthPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.valid) {
-          sessionStorage.setItem("lightning_code", providedCode);
-          navigate("/lightning-send");
+          return true;
         } else {
           setError("Invalid access code");
+          return false;
         }
       } else {
         throw new Error("Invalid access code");
@@ -47,7 +47,7 @@ export default function LightningAuthPage() {
     } finally {
       setIsValidating(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (window.devVerboseLogging)
@@ -58,7 +58,6 @@ export default function LightningAuthPage() {
     if (storedCode) {
       validateCode(storedCode).then((valid) => {
         if (valid) {
-          sessionStorage.setItem("lightning_code", storedCode);
           navigate("/lightning-send");
         } else {
           sessionStorage.removeItem("lightning_code");
@@ -68,7 +67,7 @@ export default function LightningAuthPage() {
     } else {
       setIsLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, validateCode]);
 
   const handleContinue = async () => {
     if (window.devVerboseLogging)
@@ -80,12 +79,10 @@ export default function LightningAuthPage() {
       setError("Please enter an access code");
       return;
     }
-    const valid = await validateCode(code.trim());
-    if (valid) {
+    const isValid = await validateCode(code.trim());
+    if (isValid) {
       sessionStorage.setItem("lightning_code", code.trim());
       navigate("/lightning-send");
-    } else {
-      setError("Invalid access code");
     }
   };
 
