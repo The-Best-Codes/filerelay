@@ -1,6 +1,7 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, ArrowLeft, Loader2, Lock } from "lucide-react";
+import { AlertCircle, ArrowRight, Loader2, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -14,7 +15,6 @@ export default function LightningAuthPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isValid, setIsValid] = useState(false);
 
   const validateCode = async (providedCode: string) => {
     if (window.devVerboseLogging)
@@ -31,7 +31,13 @@ export default function LightningAuthPage() {
         body: JSON.stringify({ code: providedCode }),
       });
       if (response.ok) {
-        return true;
+        const data = await response.json();
+        if (data.valid) {
+          sessionStorage.setItem("lightning_code", providedCode);
+          navigate("/lightning-send");
+        } else {
+          setError("Invalid access code");
+        }
       } else {
         throw new Error("Invalid access code");
       }
@@ -52,7 +58,7 @@ export default function LightningAuthPage() {
     if (storedCode) {
       validateCode(storedCode).then((valid) => {
         if (valid) {
-          setIsValid(true);
+          sessionStorage.setItem("lightning_code", storedCode);
           navigate("/lightning-send");
         } else {
           sessionStorage.removeItem("lightning_code");
@@ -64,8 +70,12 @@ export default function LightningAuthPage() {
     }
   }, [navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleContinue = async () => {
+    if (window.devVerboseLogging)
+      console.log(
+        "LightningAuthPage.tsx: User clicked Continue with code:",
+        code ? "***" : "none",
+      );
     if (!code.trim()) {
       setError("Please enter an access code");
       return;
@@ -73,8 +83,9 @@ export default function LightningAuthPage() {
     const valid = await validateCode(code.trim());
     if (valid) {
       sessionStorage.setItem("lightning_code", code.trim());
-      setIsValid(true);
       navigate("/lightning-send");
+    } else {
+      setError("Invalid access code");
     }
   };
 
@@ -95,73 +106,76 @@ export default function LightningAuthPage() {
     );
   }
 
-  if (isValid) {
-    return (
-      <div className="flex-1 flex justify-center items-center p-4 pt-20 overflow-auto">
-        <div className="text-center space-y-2">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-          <p className="text-muted-foreground">
-            Access granted, redirecting...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex-1 flex justify-center items-start p-4 pt-20 overflow-auto">
-      <div className="max-w-md w-full mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={handleBack}>
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Lightning File Transfer</h1>
+    <div className="flex-1 flex justify-center items-center p-4 pt-20 overflow-auto">
+      <div className="w-full max-w-md space-y-6">
+        <div className="rounded-lg border bg-background shadow-sm p-6">
+          <div className="text-center p-0 pb-4">
+            <h2 className="flex items-center justify-center gap-2 text-lg font-semibold">
+              <Lock className="size-6" />
+              Enter Access Code
+            </h2>
           </div>
-        </div>
-
-        <div className="rounded-lg border bg-background p-6 space-y-4">
-          <div className="text-center space-y-2">
-            <Lock className="h-8 w-8 mx-auto text-primary" />
-            <h2 className="text-lg font-semibold">Enter Access Code</h2>
-            <p className="text-sm text-muted-foreground">
-              Provide the access code to enable Lightning File Transfer. If you
-              don't have one, you can request one from the FileRelay team.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Access code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              disabled={isValidating}
-              className="text-lg"
-              autoFocus
-            />
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive p-2 bg-destructive/10 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isValidating || !code.trim()}
-            >
-              {isValidating ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Validating...
-                </>
-              ) : (
-                "Continue"
+          <div className="space-y-6 p-0">
+            <div className="space-y-2">
+              <span className="text-sm block text-muted-foreground">
+                Provide the access code to enable Lightning File Transfer. If
+                you don't have one, you can request one from the FileRelay team.
+              </span>
+              <Input
+                type="password"
+                placeholder="Access code"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (error) setError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleContinue();
+                  }
+                }}
+                disabled={isValidating}
+                className="text-lg font-mono"
+                autoFocus
+              />
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </form>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="flex-1"
+                size="sm"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleContinue}
+                className="flex-1"
+                size="sm"
+                disabled={isValidating || !code.trim()}
+              >
+                {isValidating ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Validating...
+                  </>
+                ) : (
+                  <>
+                    Continue
+                    <ArrowRight className="size-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
