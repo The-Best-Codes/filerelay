@@ -5,3 +5,6 @@ aptPkgs = ["g++", "make", "python3"]
 
 [phases.install]
 cacheDirectories = ['/root/.npm', '/root/.bun/install/']
+
+[phases.start]
+aptPkgs = ["libstdc++6"]

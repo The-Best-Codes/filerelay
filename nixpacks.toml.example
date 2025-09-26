@@ -7,6 +7,7 @@
 [phases.setup]
 nixPkgs = ['bun']
 nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
+aptPkgs = ["g++", "make", "python3"]
 
 [phases.install]
 cmds = ['bun run install']
