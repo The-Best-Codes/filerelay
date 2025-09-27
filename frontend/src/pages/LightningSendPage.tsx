@@ -33,10 +33,12 @@ export default function LightningSendPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [fileId, setFileId] = useState("");
   const [uploadCompleted, setUploadCompleted] = useState(false);
+  const [chunkSize, setChunkSize] = useState(90 * 1024 * 1024); // 90MB default
   const fileInputRef = useRef<HTMLInputElement>(null);
   const xhrRef = useRef<XMLHttpRequest | null>(null);
-  const uploadStartTimeRef = useRef<number>(0);
   const lastLoadedRef = useRef<number>(0);
+  const lastTimestampRef = useRef<number>(0);
+  const isCancelledRef = useRef(false);
 
   useEffect(() => {
     const storedCode = sessionStorage.getItem("lightning_code");
@@ -47,6 +49,18 @@ export default function LightningSendPage() {
       navigate("/lightning-auth");
       return;
     }
+
+    fetch("/api/lightning-config")
+      .then((res) => res.json())
+      .then((config) => {
+        if (config.chunkSize) {
+          setChunkSize(config.chunkSize);
+        }
+      })
+      .catch((err) =>
+        console.error("Failed to fetch lightning config:", err),
+      );
+
     setIsLoading(false);
     return () => {
       if (xhrRef.current) {
@@ -79,15 +93,22 @@ export default function LightningSendPage() {
     return total > 0 ? (loaded / total) * 100 : 0;
   };
 
-  const calculateSpeedAndETA = (loaded: number, total: number) => {
+  const calculateSpeedAndETA = (totalLoaded: number, totalSize: number) => {
     const now = Date.now();
-    const timeDiff = now - uploadStartTimeRef.current;
+    if (now - lastTimestampRef.current < 500) {
+      return {};
+    }
+
+    const timeDiff = now - lastTimestampRef.current;
+    const bytesDiff = totalLoaded - lastLoadedRef.current;
+
+    lastLoadedRef.current = totalLoaded;
+    lastTimestampRef.current = now;
+
     if (timeDiff > 0) {
-      const bytesDiff = loaded - lastLoadedRef.current;
       const rate = (bytesDiff / timeDiff) * 1000; // bytes per second
-      lastLoadedRef.current = loaded;
       if (rate > 0) {
-        const remaining = total - loaded;
+        const remaining = totalSize - totalLoaded;
         const eta = remaining / rate;
         return { transferRate: rate, eta };
       }
@@ -95,91 +116,144 @@ export default function LightningSendPage() {
     return { transferRate: 0, eta: undefined };
   };
 
-  const uploadFile = (file: File) => {
+  const startUpload = async (file: File) => {
+    isCancelledRef.current = false;
     const storedCode = sessionStorage.getItem("lightning_code");
     if (!storedCode) {
-      setFileProgress((prev) => ({
-        ...prev,
+      setFileProgress({
+        file,
+        progress: 0,
         status: "error",
         error: "Access code not found",
-      }));
+      });
       return;
     }
 
-    const xhr = new XMLHttpRequest();
-    xhrRef.current = xhr;
-    uploadStartTimeRef.current = Date.now();
-    lastLoadedRef.current = 0;
+    setFileProgress({ file, progress: 0, status: "uploading" });
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("code", storedCode);
+    try {
+      const initRes = await fetch("/api/lightning-upload-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: storedCode,
+          originalname: file.name,
+          size: file.size,
+        }),
+      });
 
-    xhr.open("POST", "/api/lightning-upload");
-    xhr.upload.addEventListener("progress", (e) => {
-      if (e.lengthComputable) {
-        const progress = calculateProgress(e.loaded, e.total);
-        const { transferRate, eta } = calculateSpeedAndETA(e.loaded, e.total);
-        setFileProgress((prev) => ({
-          ...prev,
-          progress,
-          transferRate,
-          eta,
-          status: "uploading",
-        }));
+      if (!initRes.ok) {
+        const errorData = await initRes.json();
+        throw new Error(errorData.error || "Failed to initialize upload");
       }
-    });
 
-    xhr.addEventListener("load", () => {
-      if (xhr.status === 200) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          setFileId(response.id);
-          generateQRCode(response.id);
-          setUploadCompleted(true);
-          setFileProgress((prev) => ({ ...prev, status: "completed" }));
-          triggerHapticFeedback("medium");
-        } catch {
-          setFileProgress((prev) => ({
-            ...prev,
-            status: "error",
-            error: "Invalid response",
-          }));
+      const { id: newFileId } = await initRes.json();
+      setFileId(newFileId);
+
+      const totalChunks = Math.ceil(file.size / chunkSize);
+      lastLoadedRef.current = 0;
+      lastTimestampRef.current = Date.now();
+
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        if (isCancelledRef.current) {
+          console.log("Upload cancelled by user.");
+          return;
         }
-      } else {
-        let errorMsg = `Upload failed: ${xhr.status}`;
-        try {
-          const response = JSON.parse(xhr.responseText);
-          if (response && response.error) {
-            errorMsg = response.error;
-          }
-        } catch {
-          // Ignore parse error, use default message
-        }
-        setFileProgress((prev) => ({
-          ...prev,
-          status: "error",
-          error: errorMsg,
-        }));
+
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunk = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append("chunk", chunk);
+        formData.append("code", storedCode);
+        formData.append("id", newFileId);
+        formData.append("chunkIndex", String(chunkIndex));
+        formData.append("totalChunks", String(totalChunks));
+
+        await uploadChunk(formData, chunkIndex, file.size);
       }
-      xhrRef.current = null;
-    });
 
-    xhr.addEventListener("error", () => {
+      if (!isCancelledRef.current) {
+        setUploadCompleted(true);
+        generateQRCode(newFileId);
+        setFileProgress((prev) => ({ ...prev, status: "completed" }));
+        triggerHapticFeedback("medium");
+      }
+    } catch (error) {
+      if ((error as Error).message === "Upload aborted") {
+        setFileProgress({ file: null, progress: 0, status: "idle" });
+        return;
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       setFileProgress((prev) => ({
         ...prev,
         status: "error",
-        error: "Upload error",
+        error: errorMessage,
       }));
-      xhrRef.current = null;
-    });
+    }
+  };
 
-    xhr.addEventListener("abort", () => {
-      setFileProgress((prev) => ({ ...prev, status: "idle" }));
-      xhrRef.current = null;
-    });
+  const uploadChunk = (
+    formData: FormData,
+    chunkIndex: number,
+    totalSize: number,
+  ) => {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
 
-    xhr.send(formData);
+      xhr.open("POST", "/api/lightning-upload-chunk");
+
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable) {
+          const chunksLoadedSize = chunkIndex * chunkSize;
+          const totalLoaded = chunksLoadedSize + e.loaded;
+          const progress = calculateProgress(totalLoaded, totalSize);
+          const { transferRate, eta } = calculateSpeedAndETA(
+            totalLoaded,
+            totalSize,
+          );
+          setFileProgress((prev) => ({
+            ...prev,
+            progress,
+            status: "uploading",
+            ...(transferRate !== undefined && { transferRate }),
+            ...(eta !== undefined && { eta }),
+          }));
+        }
+      });
+
+      xhr.addEventListener("load", () => {
+        xhrRef.current = null;
+        if (xhr.status === 200) {
+          resolve();
+        } else {
+          let errorMsg = `Upload failed: ${xhr.status}`;
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response && response.error) errorMsg = response.error;
+          } catch {
+            // ignore
+          }
+          reject(new Error(errorMsg));
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        xhrRef.current = null;
+        reject(new Error("Upload error"));
+      });
+
+      xhr.addEventListener("abort", () => {
+        xhrRef.current = null;
+        reject(new Error("Upload aborted"));
+      });
+
+      xhr.send(formData);
+    });
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -200,9 +274,7 @@ export default function LightningSendPage() {
     if (files.length > 0) {
       const file = files[0];
       if (file.size > 0) {
-        // Basic validation
-        setFileProgress({ file, progress: 0, status: "idle" });
-        uploadFile(file);
+        startUpload(file);
       }
     }
   };
@@ -213,8 +285,7 @@ export default function LightningSendPage() {
     if (files && files.length > 0) {
       const file = files[0];
       if (file.size > 0) {
-        setFileProgress({ file, progress: 0, status: "idle" });
-        uploadFile(file);
+        startUpload(file);
       }
     }
     if (fileInputRef.current) {
@@ -237,8 +308,11 @@ export default function LightningSendPage() {
   };
 
   const handleCancelUpload = () => {
+    isCancelledRef.current = true;
     if (xhrRef.current) {
       xhrRef.current.abort();
+    } else {
+      setFileProgress({ file: null, progress: 0, status: "idle" });
     }
   };
 
@@ -285,7 +359,7 @@ export default function LightningSendPage() {
                 </div>
               </div>
             )}
-            <Button onClick={handleBack} className="w-full">
+            <Button onClick={() => window.location.reload()} className="w-full">
               Upload Another File
             </Button>
           </div>
@@ -347,6 +421,16 @@ export default function LightningSendPage() {
                 className="w-full"
               >
                 Cancel Upload
+              </Button>
+            )}
+            {fileProgress.status === "error" && (
+              <Button
+                onClick={() =>
+                  setFileProgress({ file: null, progress: 0, status: "idle" })
+                }
+                className="w-full"
+              >
+                Try Again
               </Button>
             )}
           </div>

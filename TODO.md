@@ -1,3 +1,4 @@
 - Add screen wakelock
 - Use a web worker so tab can be non-focused and still run (Firefox snoozes the tab, Chromium-based is fine)
 - Persist data across deployments in Coolify and update README about how to do that
+- Reduce memory usage, put file size limits for lightning in place

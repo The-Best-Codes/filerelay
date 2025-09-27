@@ -18,6 +18,8 @@ const UPLOADS_DIR = path.join(__dirname, "uploads");
 const DB_PATH = path.join(__dirname, "lightning.db");
 const FILE_EXPIRATION_MINUTES = 10;
 const CLEANUP_INTERVAL_MINUTES = 5;
+const CHUNK_SIZE_MB = process.env.CHUNK_SIZE_MB || 90;
+const CHUNK_SIZE_BYTES = CHUNK_SIZE_MB * 1024 * 1024;
 
 if (!LIGHTNING_ACCESS_CODE) {
   console.warn(
@@ -44,7 +46,8 @@ const initializeDatabase = () => {
       id TEXT PRIMARY KEY,
       originalname TEXT NOT NULL,
       size INTEGER NOT NULL,
-      upload_time TEXT NOT NULL
+      upload_time TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending'
     )`);
     log("info", "Database initialized successfully.");
     return db;
@@ -99,17 +102,14 @@ const cleanupExpiredFiles = () => {
   }
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    cb(null, crypto.randomUUID());
-  },
-});
-const upload = multer({ storage });
+// Use memory storage to handle chunks before appending them to a file
+const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(express.json());
+
+app.get("/api/lightning-config", (req, res) => {
+  res.json({ chunkSize: CHUNK_SIZE_BYTES });
+});
 
 app.post("/api/lightning-validate-code", (req, res) => {
   const { code } = req.body;
@@ -121,30 +121,29 @@ app.post("/api/lightning-validate-code", (req, res) => {
   res.json({ valid: isValid });
 });
 
-app.post("/api/lightning-upload", upload.single("file"), (req, res, next) => {
+app.post("/api/lightning-upload-init", async (req, res, next) => {
   try {
-    if (req.body.code !== LIGHTNING_ACCESS_CODE) {
-      log("warn", "Invalid access code on upload attempt.");
+    const { code, originalname, size } = req.body;
+    if (code !== LIGHTNING_ACCESS_CODE) {
+      log("warn", "Invalid access code on upload init.");
       return res
         .status(403)
         .json({ success: false, error: "Invalid access code" });
     }
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, error: "No file uploaded" });
-    }
 
-    const { filename: id, originalname, size } = req.file;
+    const id = crypto.randomUUID();
     const upload_time = new Date().toISOString();
 
     db.prepare(
-      "INSERT INTO lightning_files (id, originalname, size, upload_time) VALUES (?, ?, ?, ?)",
+      "INSERT INTO lightning_files (id, originalname, size, upload_time, status) VALUES (?, ?, ?, ?, 'pending')",
     ).run(id, originalname, size, upload_time);
+
+    // Create an empty file to append to
+    await fs.writeFile(path.join(UPLOADS_DIR, id), "");
 
     log(
       "info",
-      `File uploaded: ${originalname} (${size} bytes) with ID: ${id}`,
+      `Initialized upload for ${originalname} (${size} bytes) with ID: ${id}`,
     );
     res.status(200).json({ success: true, id });
   } catch (error) {
@@ -152,12 +151,69 @@ app.post("/api/lightning-upload", upload.single("file"), (req, res, next) => {
   }
 });
 
+app.post(
+  "/api/lightning-upload-chunk",
+  upload.single("chunk"),
+  async (req, res, next) => {
+    try {
+      const { code, id, chunkIndex, totalChunks } = req.body;
+      if (code !== LIGHTNING_ACCESS_CODE) {
+        log("warn", `Invalid access code on chunk upload for ID: ${id}`);
+        return res
+          .status(403)
+          .json({ success: false, error: "Invalid access code" });
+      }
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "No chunk uploaded" });
+      }
+
+      const filePath = path.join(UPLOADS_DIR, id);
+      await fs.appendFile(filePath, req.file.buffer);
+
+      const isLastChunk =
+        parseInt(chunkIndex, 10) === parseInt(totalChunks, 10) - 1;
+
+      if (isLastChunk) {
+        const metadata = db
+          .prepare("SELECT size FROM lightning_files WHERE id = ?")
+          .get(id);
+        const stats = await fs.stat(filePath);
+
+        if (stats.size !== metadata.size) {
+          log(
+            "error",
+            `File size mismatch for ID ${id}. Expected ${metadata.size}, got ${stats.size}. Cleaning up.`,
+          );
+          await fs.unlink(filePath);
+          db.prepare("DELETE FROM lightning_files WHERE id = ?").run(id);
+          return res
+            .status(400)
+            .json({ success: false, error: "File assembly failed" });
+        }
+
+        db.prepare("UPDATE lightning_files SET status = 'completed' WHERE id = ?").run(
+          id,
+        );
+        log("info", `File upload completed for ID: ${id}`);
+      }
+      res.status(200).json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
 const getFileMetadata = (id) => {
-  const row = db.prepare("SELECT * FROM lightning_files WHERE id = ?").get(id);
+  const row = db
+    .prepare("SELECT * FROM lightning_files WHERE id = ? AND status = 'completed'")
+    .get(id);
+
   if (!row) return null;
 
   const uploadTime = new Date(row.upload_time);
-  const now = new Date();
+  const now = new new Date();
   const ageMinutes = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
 
   if (ageMinutes > FILE_EXPIRATION_MINUTES) {
@@ -214,6 +270,7 @@ app.get("/api/file-download/:id", (req, res, next) => {
     next(error);
   }
 });
+
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
