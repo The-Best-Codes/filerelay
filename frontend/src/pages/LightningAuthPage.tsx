@@ -120,7 +120,7 @@ export default function LightningAuthPage() {
                 you don't have one, you can request one from the FileRelay team.
               </span>
               <Input
-                type="password"
+                type="text"
                 placeholder="Access code"
                 value={code}
                 onChange={(e) => {
