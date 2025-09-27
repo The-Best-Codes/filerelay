@@ -1,7 +1,10 @@
 [phases.setup]
-nixPkgs = ['bun']
+nixPkgs = ['bun', 'nodejs_22']
 nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
 aptPkgs = ["gcc", "g++", "make", "python3"]
+
+[phases.install]
+cmds = ['bun install --frozen-lockfile', 'npm rebuild better-sqlite3']
 
 [phases.runtime]
 nixLibs = ['gcc13.cc.lib']
