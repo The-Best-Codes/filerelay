@@ -1,6 +1,6 @@
 [phases.setup]
 nixPkgs = ['bun', 'nodejs_22']
-nixpkgsArchive = 'f69ae4816bc1b501460ad2c0c63ed0cc4a9b876e'
+nixpkgsArchive = '12bd230118a1901a4a5d393f9f56b6ad7e571d01'
 aptPkgs = ["gcc", "g++", "make", "python3"]
 
 [phases.install]
