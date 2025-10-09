@@ -57,9 +57,7 @@ export default function LightningSendPage() {
           setChunkSize(config.chunkSize);
         }
       })
-      .catch((err) =>
-        console.error("Failed to fetch lightning config:", err),
-      );
+      .catch((err) => console.error("Failed to fetch lightning config:", err));
 
     setIsLoading(false);
     return () => {

@@ -193,9 +193,9 @@ app.post(
             .json({ success: false, error: "File assembly failed" });
         }
 
-        db.prepare("UPDATE lightning_files SET status = 'completed' WHERE id = ?").run(
-          id,
-        );
+        db.prepare(
+          "UPDATE lightning_files SET status = 'completed' WHERE id = ?",
+        ).run(id);
         log("info", `File upload completed for ID: ${id}`);
       }
       res.status(200).json({ success: true });
@@ -207,13 +207,15 @@ app.post(
 
 const getFileMetadata = (id) => {
   const row = db
-    .prepare("SELECT * FROM lightning_files WHERE id = ? AND status = 'completed'")
+    .prepare(
+      "SELECT * FROM lightning_files WHERE id = ? AND status = 'completed'",
+    )
     .get(id);
 
   if (!row) return null;
 
   const uploadTime = new Date(row.upload_time);
-  const now = new new Date();
+  const now = new new Date()();
   const ageMinutes = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
 
   if (ageMinutes > FILE_EXPIRATION_MINUTES) {
@@ -270,7 +272,6 @@ app.get("/api/file-download/:id", (req, res, next) => {
     next(error);
   }
 });
-
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
