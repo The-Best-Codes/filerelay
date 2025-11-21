@@ -215,7 +215,7 @@ const getFileMetadata = (id) => {
   if (!row) return null;
 
   const uploadTime = new Date(row.upload_time);
-  const now = new new Date()();
+  const now = new Date();
   const ageMinutes = (now.getTime() - uploadTime.getTime()) / (1000 * 60);
 
   if (ageMinutes > FILE_EXPIRATION_MINUTES) {
