@@ -144,7 +144,7 @@ export default function LightningReceivePage() {
               href={`/api/file-download/${fileId}`}
               download={metadata.originalname}
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="size-4" />
               Download File
             </a>
           </Button>
