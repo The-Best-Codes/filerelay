@@ -293,8 +293,8 @@ export default function SendPage() {
                     />
                     <div className="text-center">
                       <p className="text-sm text-foreground mb-2">
-                        If you can't, choose "Enter Code" and enter this code
-                        manually:
+                        If you can't, open FileRelay on your other device,
+                        choose "Enter Code", and enter this code manually:
                       </p>
                       <div className="bg-muted px-4 py-3 rounded-lg font-mono text-base font-semibold">
                         {clientId}
