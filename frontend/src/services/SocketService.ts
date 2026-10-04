@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import { sendFileData } from "../utils/dataChannelTransfer";
 
 export interface FileMetadata {
   name: string;
@@ -47,7 +48,8 @@ class SocketService {
   private fileMetadata: FileMetadata | null = null;
   private transferStartTime: number = 0;
 
-  private readonly CHUNK_SIZE = 64 * 1024; // 64KB is the max recommended for best browser support
+  private lastReceiveProgress = 0;
+  private sending = false;
 
   constructor() {
     if (window.devVerboseLogging)
@@ -217,6 +219,7 @@ class SocketService {
 
   private setupDataChannel(channel: RTCDataChannel) {
     this.dataChannel = channel;
+    channel.binaryType = "arraybuffer";
 
     this.dataChannel.onopen = () => {
       console.log("Data channel opened");
@@ -313,6 +316,7 @@ class SocketService {
         this.receivedSize = 0;
         this.receivedBuffer = [];
         this.transferStartTime = Date.now();
+        this.lastReceiveProgress = 0;
 
         // Notify about metadata
         if (this.fileMetadata) {
@@ -327,6 +331,7 @@ class SocketService {
           eta: 0,
           status: "transferring",
         });
+        if (this.fileMetadata?.size === 0) this.updateProgress();
         return;
       } catch (e) {
         console.error("Error parsing string message from data channel:", e);
@@ -366,12 +371,24 @@ class SocketService {
 
   private updateProgress() {
     if (this.fileMetadata) {
+      const now = Date.now();
+      if (
+        this.receivedSize < this.fileMetadata.size &&
+        now - this.lastReceiveProgress < 100
+      )
+        return;
+      this.lastReceiveProgress = now;
       // Cap progress at 100% for display
       const progress = Math.min(
         100,
-        (this.receivedSize / this.fileMetadata.size) * 100,
+        this.fileMetadata.size === 0
+          ? 100
+          : (this.receivedSize / this.fileMetadata.size) * 100,
       );
-      const elapsedTime = (Date.now() - this.transferStartTime) / 1000;
+      const elapsedTime = Math.max(
+        0.001,
+        (Date.now() - this.transferStartTime) / 1000,
+      );
       const transferRate = this.receivedSize / elapsedTime;
       const eta = (this.fileMetadata.size - this.receivedSize) / transferRate;
 
@@ -429,105 +446,46 @@ class SocketService {
       return;
     }
 
-    // Send files sequentially
-    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
-      const file = files[fileIndex];
-      await this.sendSingleFile(file, fileIndex);
+    if (this.sending) throw new Error("A file transfer is already in progress");
+    this.sending = true;
+    try {
+      for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+        await this.sendSingleFile(files[fileIndex], fileIndex);
+      }
+    } finally {
+      this.sending = false;
     }
   }
 
   private async sendSingleFile(file: File, fileIndex: number): Promise<void> {
-    if (window.devVerboseLogging)
-      console.log(
-        "SocketService: Sending single file:",
-        file.name,
-        "size:",
-        file.size,
-      );
-    return new Promise((resolve, reject) => {
-      if (!this.dataChannel) {
-        reject(new Error("No data channel available"));
-        return;
-      }
-
-      // Send file metadata
-      const metadata: FileMetadata = {
-        name: file.name,
-        size: file.size,
-      };
-      if (window.devVerboseLogging)
-        console.log("SocketService: Sending file metadata:", metadata);
-      this.dataChannel.send(JSON.stringify(metadata));
-
-      let offset = 0;
-      const startTime = Date.now();
-
-      const sendNextChunk = () => {
-        if (offset >= file.size) {
-          this.onTransferProgressCallback?.({
-            fileIndex,
-            fileName: file.name,
-            progress: 100,
-            transferRate: file.size / ((Date.now() - startTime) / 1000),
-            eta: 0,
-            status: "completed",
-          });
-          resolve();
-          return;
-        }
-
-        // Tweak CHUNK_SIZE * X to change performance
-        if (this.dataChannel!.bufferedAmount > this.CHUNK_SIZE * 4) {
-          this.dataChannel!.onbufferedamountlow = () => {
-            this.dataChannel!.onbufferedamountlow = null; // one-time listener
-            sendNextChunk();
-          };
-          return;
-        }
-
-        const slice = file.slice(offset, offset + this.CHUNK_SIZE);
-        const reader = new FileReader();
-
-        reader.onload = (event) => {
-          if (event.target?.result && this.dataChannel) {
-            try {
-              this.dataChannel.send(event.target.result as ArrayBuffer);
-              offset += (event.target.result as ArrayBuffer).byteLength;
-
-              const elapsedTime = (Date.now() - startTime) / 1000;
-              const transferRate = offset / elapsedTime;
-              const eta = (file.size - offset) / transferRate;
-              // Cap progress at 100% for display
-              const progress = Math.min(100, (offset / file.size) * 100);
-
-              this.onTransferProgressCallback?.({
-                fileIndex,
-                fileName: file.name,
-                progress,
-                transferRate,
-                eta: isFinite(eta) ? eta : 0,
-                status: "transferring",
-              });
-
-              // Use queueMicrotask to avoid blocking the event loop on very fast connections
-              queueMicrotask(sendNextChunk);
-            } catch (error) {
-              console.error("Error sending chunk:", error);
-              reject(error);
-            }
-          }
-        };
-
-        reader.onerror = () => {
-          reject(new Error("File read error"));
-        };
-
-        reader.readAsArrayBuffer(slice);
-      };
-
-      this.dataChannel.bufferedAmountLowThreshold = this.CHUNK_SIZE * 2; // Tweak CHUNK_SIZE * X to change performance
-      sendNextChunk();
-    });
+    const channel = this.dataChannel;
+    if (!channel || channel.readyState !== "open") {
+      throw new Error("No data channel available");
+    }
+    channel.send(JSON.stringify({ name: file.name, size: file.size }));
+    const startTime = performance.now();
+    const report = (sent: number, completed = false) => {
+      const elapsed = Math.max(0.001, (performance.now() - startTime) / 1000);
+      const transferRate = sent / elapsed;
+      this.onTransferProgressCallback?.({
+        fileIndex,
+        fileName: file.name,
+        progress: completed
+          ? 100
+          : Math.min(99, file.size ? (sent / file.size) * 100 : 0),
+        transferRate,
+        eta: transferRate ? (file.size - sent) / transferRate : 0,
+        status: completed ? "completed" : "transferring",
+      });
+    };
+    report(0);
+    await sendFileData(
+      channel,
+      file,
+      this.peerConnection?.sctp?.maxMessageSize,
+      report,
+    );
+    report(file.size, true);
   }
 
   // Event handlers

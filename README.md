@@ -16,9 +16,11 @@ Fork this repo to deploy your own copy.
 
 #### Coolify
 
-If you're deploying using Coolify, I recommend using Nixpacks.
+Select Railpack as the build pack and use the repository root as the build directory. The checked-in `railpack.json` installs Node 24 and native build tools, including `node-gyp` before Bun installs `better-sqlite3`.
 
 - Selecting "Port 1869" as the port number.
-- Use `bun install --frozen-lockfile` as the install step, `bun run build` as the build step, and `bun run start` as the start step.
+- Leave custom install commands unset so Railpack uses the configured install step. The build and start commands are `bun run build` and `bun run start`.
 - Set the `VITE_BASE_URL=https://example.com` environment variable in your deployment configuration.
 - Also set `LIGHTNING_ACCESS_CODE=******` in the environment variables.
+
+Railpack configuration reference: https://railpack.com/config/file/
