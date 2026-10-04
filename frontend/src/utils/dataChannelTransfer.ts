@@ -1,6 +1,5 @@
-const READ_SIZE = 4 * 1024 * 1024;
-const HIGH_WATER = 4 * 1024 * 1024;
-const LOW_WATER = 1024 * 1024;
+const HIGH_WATER = 256 * 1024;
+const LOW_WATER = 128 * 1024;
 const MESSAGE_SIZE = 64 * 1024;
 
 function waitForDrain(
@@ -34,8 +33,7 @@ function waitForDrain(
   });
 }
 
-// Batch disk reads independently of network message size. Keep reliable ordering
-// and bounded memory while allowing the transport to stay busy between reads.
+// Pace file reads with the transport instead of flooding SCTP with large batches.
 export async function sendFileData(
   channel: RTCDataChannel,
   file: Blob,
@@ -45,28 +43,29 @@ export async function sendFileData(
   const chunkSize = Math.min(MESSAGE_SIZE, maxMessageSize || MESSAGE_SIZE);
   let sent = 0;
   let lastProgress = performance.now();
-  for (let readOffset = 0; readOffset < file.size; readOffset += READ_SIZE) {
-    const batch = await file
-      .slice(readOffset, readOffset + READ_SIZE)
-      .arrayBuffer();
-    for (let offset = 0; offset < batch.byteLength; offset += chunkSize) {
-      const chunk = new Uint8Array(
-        batch,
-        offset,
-        Math.min(chunkSize, batch.byteLength - offset),
-      );
-      if (channel.bufferedAmount + chunk.byteLength > HIGH_WATER) {
-        await waitForDrain(channel, LOW_WATER);
-      }
-      if (channel.readyState !== "open")
-        throw new Error("File transfer connection closed");
-      channel.send(chunk);
-      sent += chunk.byteLength;
-      const now = performance.now();
-      if (now - lastProgress >= 100) {
-        onProgress(Math.max(0, sent - channel.bufferedAmount));
-        lastProgress = now;
-      }
+  const reader = new FileReader();
+  while (sent < file.size) {
+    if (channel.bufferedAmount > HIGH_WATER) {
+      await waitForDrain(channel, LOW_WATER);
+    }
+    if (channel.readyState !== "open")
+      throw new Error("File transfer connection closed");
+
+    const chunk = await new Promise<ArrayBuffer>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () =>
+        reject(reader.error ?? new Error("File read error"));
+      reader.onabort = () => reject(new Error("File read aborted"));
+      reader.readAsArrayBuffer(file.slice(sent, sent + chunkSize));
+    });
+    if (channel.readyState !== "open")
+      throw new Error("File transfer connection closed");
+    channel.send(chunk);
+    sent += chunk.byteLength;
+    const now = performance.now();
+    if (now - lastProgress >= 100) {
+      onProgress(Math.max(0, sent - channel.bufferedAmount));
+      lastProgress = now;
     }
   }
   // Do not report completion while bytes are still queued locally.
